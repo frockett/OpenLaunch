@@ -1,6 +1,9 @@
 ### dotenv ###
 .env
 
+### SQLite DB file ###
+.db
+
 ### DotnetCore ###
 # .NET Core build folders
 bin/
