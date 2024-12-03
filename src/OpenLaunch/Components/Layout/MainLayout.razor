@@ -1,0 +1,44 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using Color = MudBlazor.Color
+@inherits LayoutComponentBase
+@attribute [Authorize]
+
+    @* Required *@
+    <MudThemeProvider @rendermode="InteractiveServer" />
+    <MudPopoverProvider @rendermode="InteractiveServer" />
+    @* Needed for dialogs *@
+    <RadzenDialog></RadzenDialog>
+    <MudDialogProvider @rendermode="InteractiveServer"
+                       FullWidth="true"
+                       />
+    @* Needed for snackbars *@
+    <MudSnackbarProvider @rendermode="InteractiveServer" />
+    <RadzenNotification></RadzenNotification>
+    
+    <MudLayout>
+        <MudAppBar Elevation="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="MudBlazor.Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+            My Application
+            <MudSpacer></MudSpacer>
+        </MudAppBar>
+        <MudDrawer Color="Color.Primary" @bind-Open="@_drawerOpen" Breakpoint="Breakpoint.Xl" ClipMode="DrawerClipMode.Always" Variant="@DrawerVariant.Responsive" Elevation="2">
+            <MudDrawerHeader>
+                <MudText Typo="Typo.h5" class="mt-1">
+                    Admin Dashboard
+                </MudText>
+            </MudDrawerHeader>
+            <NavMenu></NavMenu>
+        </MudDrawer>
+        <MudMainContent>
+            @Body
+        </MudMainContent>
+    </MudLayout>
+    
+    @code {
+        bool _drawerOpen = true;
+
+        void DrawerToggle()
+        {
+            _drawerOpen = !_drawerOpen;
+        }
+    }

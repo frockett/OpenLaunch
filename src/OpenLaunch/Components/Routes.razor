@@ -1,0 +1,17 @@
+﻿@using OpenLaunch.Components.Account
+@using OpenLaunch.Components.Account.Shared
+@inject NavigationManager NavigationManager
+
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                <RedirectToLogin/>
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1"/>
+    </Found>
+    <NotFound>
+        <p>Page not found. Attempt to resove route: @NavigationManager.Uri</p>
+    </NotFound>
+</Router>

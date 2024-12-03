@@ -1,0 +1,58 @@
+@using OpenLaunch.Components.Pages
+@* EmailPreviewDialog.razor *@
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="width:80%; max-height: 700px; overflow-y: auto">
+            <MudPaper Class="pa-4">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.subtitle1"><strong>From:</strong> @EmailData.FromAddress</MudText>
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.subtitle1"><strong>To:</strong></MudText>
+                        @foreach(var address in EmailData.ToAddresses)
+                        {
+                        <MudChip T="string">@address</MudChip>
+                        }
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.subtitle1"><strong>Subject:</strong> @EmailData.Subject</MudText>
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudDivider Class="my-4"/>
+                        <div class="email-content">
+                            @((MarkupString)EmailData.HtmlContent)
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+[CascadingParameter]
+MudDialogInstance MudDialog { get; set; }
+
+[Parameter]
+public Emails.EmailPreviewModel EmailData { get; set; }
+
+private void Cancel() => MudDialog.Cancel();
+}
+
+<style>
+    .email-content {
+        background-color: white;
+        padding: 16px;
+        border-radius: 4px;
+        min-height: 200px;
+    }
+</style>

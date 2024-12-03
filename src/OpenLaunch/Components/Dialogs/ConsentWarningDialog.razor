@@ -1,0 +1,33 @@
+@using MudBlazor
+@using Color = MudBlazor.Color
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6">Unsubscribed Emails Selected</MudText>
+        <MudText Typo="Typo.body1" Class="mt-4">
+            The following users have not consented:
+        </MudText>
+        <MudList T="string" Dense="true" Class="mt-4">
+            @foreach (var email in NonConsentedEmails)
+            {
+                <MudListItem T="string">@email</MudListItem>
+            }
+        </MudList>
+        <MudText Typo="Typo.body1" Class="my-4 fw-bold">Are you sure you want to proceed?</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Confirm" Color="Color.Error">Proceed Anyway</MudButton>
+        <MudButton OnClick="Cancel" Color="Color.Primary">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+[CascadingParameter]
+MudDialogInstance MudDialog { get; set; }
+
+[Parameter] public List<string> NonConsentedEmails { get; set; } = new();
+
+private void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+
+private void Cancel() => MudDialog.Cancel();
+}

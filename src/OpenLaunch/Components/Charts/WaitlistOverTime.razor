@@ -1,0 +1,80 @@
+@using OpenLaunch.Data
+@using OpenLaunch.Models
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext _context
+@inject IServiceProvider ServiceProvider
+
+<ApexChart TItem="SignupData"
+           Title="Waitlist Signups"
+           Height="300">
+
+    <ApexPointSeries TItem="SignupData"
+                     Items="SignupStats"
+                     Name="New Users"
+                     SeriesType="SeriesType.Line"
+                     XValue="@(e => e.Date.ToString("MMM dd"))"
+                     YValue="@(e => e.Count)"
+    />
+</ApexChart>
+
+@code {
+private List<SignupData> SignupStats = new();
+
+[Parameter]
+public DateTime StartDate { get; set; }
+
+[Parameter]
+public DateTime EndDate { get; set; }
+
+protected override async Task OnInitializedAsync()
+{
+    await LoadWaitlistStatsAsync();
+}
+
+private async Task LoadWaitlistStatsAsync()
+{
+    using var scope = ServiceProvider.CreateScope();
+    var scopedContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    
+    int baselineTotal = await scopedContext.WaitlistSignups
+        .Where(u => u.CreatedAt.Date < StartDate)
+        .CountAsync();
+    
+    // Get all users grouped by date
+    var userSignups = await scopedContext.WaitlistSignups
+        .Where(u => u.CreatedAt.Date >= StartDate && u.CreatedAt.Date <= EndDate)
+        .GroupBy(u => u.CreatedAt.Date)
+        .Select(g => new
+        {
+            Date = g.Key,
+            Count = g.Count()
+        })
+        .OrderBy(x => x.Date)
+        .ToListAsync();
+    
+    var dateRange = Enumerable.Range(0, (EndDate - StartDate).Days + 1)
+        .Select(offset => StartDate.AddDays(offset))
+        .ToList();
+
+    int runningTotal = baselineTotal;
+
+    SignupStats = dateRange.Select(date =>
+    {
+        var signup = userSignups.FirstOrDefault(x => x.Date == date);
+        runningTotal += signup?.Count ?? 0;
+
+        return new SignupData
+        {
+            Date = date,
+            Count = runningTotal
+        };
+    }).ToList();
+}
+
+// Class to hold the signup data
+public class SignupData
+{
+public DateTime Date { get; set; }
+public int Count { get; set; }
+}
+}

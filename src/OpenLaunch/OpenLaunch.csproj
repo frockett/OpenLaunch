@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>aspnet-AdminDash-f8039f7c-8bc7-4fa2-9a41-6b8b72831c4e</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AWSSDK.SimpleEmailV2" Version="3.7.404.13" />
+        <PackageReference Include="Blazor-ApexCharts" Version="4.0.1" />
+        <PackageReference Include="dotenv.net" Version="3.2.1" />
+        <PackageReference Include="Extensions.MudBlazor.StaticInput" Version="2.1.5" />
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0" />
+        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.2.1" />
+        <PackageReference Include="MudBlazor" Version="7.15.0" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.1" />
+        <PackageReference Include="Radzen.Blazor" Version="5.6.8" />
+        <PackageReference Include="Serilog" Version="4.1.0" />
+        <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
+        <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="7.1.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Database\" />
+      <Folder Include="wwwroot\images\" />
+    </ItemGroup>
+
+</Project>

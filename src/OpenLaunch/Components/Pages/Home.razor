@@ -1,0 +1,193 @@
+﻿@page "/"
+@using System.Text.Json
+@using OpenLaunch.Components.Charts
+@using OpenLaunch.Services
+@using OpenLaunch.Data
+@using Microsoft.EntityFrameworkCore
+@inject IServiceProvider ServiceProvider
+@inject AWSDataFetching AwsDataFetching
+
+<PageTitle>Home</PageTitle>
+
+<MudContainer Class="px-8" MaxWidth="MaxWidth.False">
+    <div style="display: flex; width: 100%; padding: 0.8rem 0; justify-content: flex-end; position: relative;">
+    <MudSelect Class="flex-grow-0" Style="width: 200px; font-size: 0.8rem; margin-left: auto;" T="int" @bind-Value="SelectedRange" Label="Date Range" Variant="MudBlazor.Variant.Outlined">
+        <MudSelectItem Value="7">Previous 7 Days</MudSelectItem>
+        <MudSelectItem Value="14">Previous 14 Days</MudSelectItem>
+        <MudSelectItem Value="30">Previous 30 Days</MudSelectItem>
+    </MudSelect>
+    </div>
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
+                <div style="display: flex; flex-direction: column; gap: 3rem; justify-content: center; align-items: center;">
+                    <h3>Signups Last 7 days</h3>
+                    <div style="font-size: 3rem; font-weight: bold;">@newSignups</div>
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
+                <div style="display: flex; flex-direction: column; gap: 3rem; justify-content: center; align-items: center;">
+                    <h3>Percent of users active</h3>
+                    <div style="font-size: 3rem; font-weight: bold;">@mauPercent %</div>
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="12" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
+                <div style="display: flex; flex-direction: column; gap: 3rem; justify-content: center; align-items: center;">
+                    <h3>Total Waitlist Signups</h3>
+                    <div style="display: flex; gap: 0.75rem; align-items: baseline; justify-content: center">
+                        <div style="font-size: 3rem; font-weight: bold;">@totalWaitlist</div>
+                        <div style="font-size: 0.75rem; font-weight: 500; color: green">(Prev 7 days) +@sevenDayWaitlistGrowth</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="12">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 350px;">
+                @if (showChart)
+                {
+                    <MetricLineChart Title="Email Metrics Over Time" SeriesData="@emailMetricsData"/>
+                }
+                else
+                {
+                    <div class="flex-grow-1" style="display: flex; width: 100%; height: 100%; justify-content: center; align-items: center;">
+                    <text>Loading data...</text>
+                    </div>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="12">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 350px;">
+                @if (showChart)
+                {
+                    <WaitlistOverTime StartDate="@startDate" EndDate="@endDate"></WaitlistOverTime>
+                }
+                else
+                {
+                <div class="flex-grow-1" style="display: flex; width: 100%; height: 100%; justify-content: center; align-items: center;">
+                    <text>Loading data...</text>
+                </div>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 100%"></MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="12" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private Dictionary<string, List<MetricLineChart.MetricResult>> emailMetricsData;
+    private int _selectedRange = 7; // Default to 7 days
+
+    private int SelectedRange
+    {
+        get => _selectedRange;
+        set
+        {
+            if (_selectedRange != value)
+            {
+                _selectedRange = value;
+                _ = UpdateDateRangeAsync(); // Trigger chart update
+            }
+        }
+    }
+    private DateTime startDate;
+    private DateTime endDate;
+    private bool showChart = true;
+    
+    private int newSignups;
+    private int mauCount;
+    private int mauPercent;
+    private int totalUsers;
+
+    private int totalWaitlist;
+    private int sevenDayWaitlistGrowth;
+
+    private int emailOpens;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await UpdateDateRangeAsync();
+        
+        // endDate = DateTime.UtcNow.Date;
+        // startDate = endDate.AddDays(-6);
+        //
+        // var dateRange = Enumerable.Range(0, (endDate - startDate).Days + 1)
+        //     .Select(offset => startDate.AddDays(offset))
+        //     .ToList();
+        //
+        // await PrepareMetricDataAsync(dateRange);
+        
+        using var scope = ServiceProvider.CreateScope();
+        var scopedContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        totalWaitlist = await scopedContext.WaitlistSignups
+            .CountAsync();
+
+        sevenDayWaitlistGrowth = await scopedContext.WaitlistSignups
+            .CountAsync(s => s.CreatedAt > DateTime.UtcNow.AddDays(-7));
+    }
+    
+    private async Task UpdateDateRangeAsync()
+    {
+        endDate = DateTime.UtcNow.Date;
+        startDate = endDate.AddDays(-SelectedRange + 1);
+
+        var dateRange = Enumerable.Range(0, (endDate - startDate).Days + 1)
+            .Select(offset => startDate.AddDays(offset))
+            .ToList();
+
+        showChart = false;
+        await PrepareMetricDataAsync(dateRange);
+        await Task.Delay(1);
+        showChart = true;
+        StateHasChanged();
+    }
+
+    private async Task PrepareMetricDataAsync(List<DateTime> dateRange)
+    {
+        var awsData = await AwsDataFetching.FetchBatchMetricsAsync(startDate, endDate);
+        
+        emailMetricsData = new Dictionary<string, List<MetricLineChart.MetricResult>>(
+            awsData.Results
+            // .Where(result => result.Timestamps.Any())
+            .ToDictionary(
+                result => result.Id,
+                result =>
+                {
+                    var metricData = result.Timestamps.Zip(result.Values, (timestamp, value) => new MetricLineChart.MetricResult
+                    {
+                        Timestamp = timestamp,
+                        Value = value
+                    }).ToList();
+                    
+                    return dateRange.Select(date => metricData.FirstOrDefault(md => md.Timestamp.Date == date) 
+                                                    ?? new MetricLineChart.MetricResult
+                                                    {
+                                                        Timestamp = date,
+                                                        Value = 0
+                                                    }).ToList();
+                }
+            )
+            );
+        // Console.WriteLine($@"BATCH METRICS RESPONSE: {JsonSerializer.Serialize(awsData, new JsonSerializerOptions
+        // {
+        //     WriteIndented = true
+        // })}");
+    }
+
+
+}

@@ -1,0 +1,241 @@
+@page "/Emails"
+@using OpenLaunch.Components.Dialogs
+@using OpenLaunch.Interfaces
+@using OpenLaunch.Services
+@using OpenLaunch.Utils
+@using OpenLaunch.Models
+@using Color = MudBlazor.Color
+@using DialogOptions = MudBlazor.DialogOptions
+@using Size = MudBlazor.Size
+@using Variant = MudBlazor.Variant
+
+@inject IEmailService EmailService
+@inject IDialogService DialogService
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ISnackbar Snackbar
+@inject Microsoft.Extensions.Options.IOptions<EmailSettings> EmailSettingsOptions
+
+<div style="display:flex; width: 100%; padding: 1rem; justify-content: space-between; gap: 2rem;">
+    <div style="display: flex; flex-direction: column; width: 100%; gap: 1rem;">
+        <div style="display: flex; gap: 2rem; align-items: center; justify-content: start">
+            <MudTextField @bind-Value="@displayName" Placeholder="My App noreply" Label="Display Name" Variant="MudBlazor.Variant.Text"></MudTextField>
+            <MudAutocomplete T="string" Label="From Address" @bind-Value="@fromAddress"
+                             SearchFunc="@Search1" ResetValueOnEmptyText="true"/>
+            <MudTextField @bind-Value="@subject" Label="Subject" Variant="MudBlazor.Variant.Text"></MudTextField>
+        </div>
+        <RadzenHtmlEditor @ref="htmlEditor" @bind-Value=@htmlValue style="flex: 1; min-height: 0; width: 100%;" Input=@OnInput Change=@OnChange Paste=@OnPaste UploadComplete="@OnUploadComplete" Execute=@OnExecute 
+                          UploadHeaders="@(new Dictionary<string, string> { {"RequestVerificationToken", Antiforgery.GetAndStoreTokens(HttpContextAccessor.HttpContext).RequestToken }
+                                              })"
+                          UploadUrl="api/upload-image">
+        </RadzenHtmlEditor>
+        <div style="display: flex; gap: 1rem; width: 100%; justify-content: end; align-items: center;">
+            <MudButton OnClick="ShowPreview" Variant="Variant.Outlined">Preview</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendEmailAsync">
+                @if (isSending)
+                {
+                     <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Inherit" />
+                     <span style="margin-left: 8px;">Sending...</span>
+                }
+                else
+                {
+                    <span>Send</span>
+                }
+
+            </MudButton>
+        </div>
+    </div>
+    <WaitlistDataGrid OnSelectedItemsChanged="HandleSelectedItemsChanged"></WaitlistDataGrid>
+</div>
+
+
+@code {
+    private RadzenHtmlEditor htmlEditor;
+    
+    public class EmailPreviewModel
+    {
+        public string? DisplayName { get; set; } = "noreply";
+        public string FromAddress { get; set; }
+        public List<string> ToAddresses { get; set; }
+        public string Subject { get; set; }
+        public string HtmlContent { get; set; }
+    }
+    private IEnumerable<WaitlistSignup> selectedItems;
+    private List<string> selectedEmails = [];
+    private string? subject;
+    private string? fromAddress;
+    private string? displayName;
+
+    private string editorContent;
+
+    private bool isSending = false;
+
+    // For release version this should pull from a database.
+    private List<string> fromAddresses;
+
+    protected override void OnInitialized()
+    {
+        fromAddresses = EmailSettingsOptions.Value.FromAddresses;
+    }
+
+    private async Task ShowPreview()
+    {
+        var dialogOptions = new MudBlazor.DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true,
+            BackdropClick = true,
+        };
+        
+        var parameters = new DialogParameters<EmailPreviewDialog>
+        {
+            { x => x.EmailData, new EmailPreviewModel 
+                {
+                    FromAddress = fromAddress,
+                    ToAddresses = selectedEmails,
+                    Subject = subject,
+                    HtmlContent = htmlValue
+                }
+            }
+        };
+
+        var dialog = await DialogService.ShowAsync<EmailPreviewDialog>("Email Preview", parameters);
+        var result = await dialog.Result;
+    }
+
+    private void HandleSelectedItemsChanged(IEnumerable<WaitlistSignup> items)
+    {
+        selectedItems = items;
+        selectedEmails = selectedItems.Select(i => i.Email).ToList();
+    }
+    
+    private async Task<IEnumerable<string>> Search1(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+            return fromAddresses;
+        return fromAddresses.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+    
+    string htmlValue = @"<div style=""padding: 24px 36px; min-width: 320px; max-width: 600px; margin: 0 auto;"">
+    <h2 style=""text-align:left"">Accelerated, smarter, and cost-effective Blazor development</h2>
+    <h3 style=""text-align:left"">Radzen Blazor Studio provides tons of productivity gains for Blazor developers</h3>
+    <h4 style=""text-align:left"">Get started today. Radzen Blazor Studio is free to use.</h4>
+    <div><br></div>
+    <div>-- Crockett</div>    
+    <div style=""text-align:center; padding-top: 48px;"">
+        <img src=""https://i.ibb.co/Fxjd2jC/resellmatepurple.png"" alt=""Resellmate"" border=""0"" width=""200"">
+    </div>
+    </div>";
+    
+    void OnPaste(HtmlEditorPasteEventArgs args)
+    {
+        Console.WriteLine($"Paste: {args.Html}");
+    }
+
+    void OnChange(string html)
+    {
+        Console.WriteLine($"Change: {html}");
+    }
+
+    void OnInput(string html)
+    {
+        Console.WriteLine($"Input: {html}");
+    }
+    
+    void OnUploadComplete(UploadCompleteEventArgs args)
+    {
+        Console.WriteLine($"RAW RESPONSE: {args.RawResponse}");
+    }
+
+    void OnExecute(HtmlEditorExecuteEventArgs args)
+    {
+        Console.WriteLine($"EXECUTED: {args}");
+    }
+
+    private async Task SendEmailAsync()
+    {
+        if (isSending) return;
+        
+        var plaintext = HtmlUtils.ConvertHtmlToPlainText(htmlValue);
+        
+        if (!selectedEmails.Any())
+        {
+            Snackbar.Add("No emails selected. You must select at least one.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(plaintext))
+        {
+            Snackbar.Add("Email has no content. Do not send an empty email.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(subject))
+        {
+            Snackbar.Add("You must include a subject.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(fromAddress))
+        {
+            Snackbar.Add("You must select a from address.", Severity.Warning);
+            return;
+        }
+        
+        // Warn the user if any selected items do not have UpdateConsent == True
+        if (selectedItems.Any(x => !x.UpdateConsent))
+        {
+            var nonConsentedEmails = selectedItems
+                .Where(x => !x.UpdateConsent)
+                .Select(x => x.Email)
+                .ToList();
+
+            var parameters = new DialogParameters
+            {
+                { "NonConsentedEmails", nonConsentedEmails }
+            };
+            
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+            
+            var dialog = await DialogService.ShowAsync<ConsentWarningDialog>("Warning", parameters, options);
+            var dialogResult = await dialog.Result;
+            
+            if (!(dialogResult.Data as bool? ?? false))
+            {
+                return;
+            }
+        }
+
+        try
+        {
+            // Change state of Send button
+            isSending = true;
+            StateHasChanged();
+            
+            var result = await EmailService.SendEmailAsync(fromAddress,
+                selectedEmails, subject, htmlValue, plaintext, displayName);
+
+            var parameters = new DialogParameters
+            {
+                { "Result", result }
+            };
+
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, FullWidth = true };
+            DialogService.ShowAsync<EmailSendResultDialog>("Email Send Results", parameters, options);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            // Reset state of Send button
+            isSending = false;
+            StateHasChanged();
+        }
+        
+
+    }
+}
+

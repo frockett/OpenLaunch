@@ -1,0 +1,153 @@
+@using System.Net.Http.Json
+@using OpenLaunch.Data
+@using OpenLaunch.Models
+@using Microsoft.EntityFrameworkCore
+@using ButtonType = MudBlazor.ButtonType
+@using Color = MudBlazor.Color
+@using Variant = MudBlazor.Variant
+@inject IServiceProvider ServiceProvider
+@inject ISnackbar Snackbar
+
+<div style="height:calc(100vh - 120px); display:grid; grid-template-rows: minmax(0,1fr); ">
+<MudDataGrid T="WaitlistSignup" Height="88%" MultiSelection="true" SelectedItemsChanged="OnSelectedItemsChangedHandler" Items="@Elements" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter"
+             Hideable="true" RowClick="@RowClicked" RowsPerPage="25" FixedHeader="true" RowContextMenuClick="RowRightClicked">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Waitlist</MudText>
+        <MudSpacer />
+        <MudSwitch @bind-Value="_applyConsentFilter" Color="Color.Primary" Label="Hide Unsubscribed"></MudSwitch>
+        <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="MudBlazor.Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <Columns>
+        <SelectColumn T="WaitlistSignup" />
+        <PropertyColumn Property="x => x.Id" Hidden="true" Title="ID"></PropertyColumn>
+        <PropertyColumn Property="x => x.Email" Title="Email">
+            <CellTemplate Context="context">
+                <MudTooltip Text="@context.Item.Email">
+                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">
+                        @context.Item.Email
+                    </div>
+                </MudTooltip>
+            </CellTemplate>
+        </PropertyColumn>
+        @* <PropertyColumn CellStyle="max-width: 120px;" Property="x => x.Email" Title="Email" /> *@
+        <PropertyColumn Property="x => x.UpdateConsent" Title="Wants Updates" />
+        <PropertyColumn Property="x => x.BetaConsent"  Title="Wants Beta" SortBy="@_sortBy" />
+        <PropertyColumn Property="x => x.CreatedAt.ToShortDateString()" Title="Created" />
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudStack Row>
+                    <MudButton Size="@MudBlazor.Size.Small" Variant="@Variant.Filled" OnClick="@(() => HandleDeleteSignup(context.Item))" Color="@Color.Error">Delete</MudButton>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager Class="py-2" T="WaitlistSignup" />
+    </PagerContent>
+</MudDataGrid>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<IEnumerable<WaitlistSignup>> OnSelectedItemsChanged { get; set; }
+    private IEnumerable<WaitlistSignup> Elements = new List<WaitlistSignup>();
+    private HashSet<WaitlistSignup> selectedItemsHashSet = new();
+    public IEnumerable<WaitlistSignup> selectedItems => selectedItemsHashSet.ToList();
+    
+    private Func<WaitlistSignup, bool> _defaultFilter => x => x.UpdateConsent || !_applyConsentFilter;
+
+    private string _searchString;
+    private bool _sortNameByLength;
+    private List<string> _events = new();
+
+    private bool _applyConsentFilter = true;
+    // custom sort by name length
+    private Func<WaitlistSignup, object> _sortBy => x =>
+    {
+        return x.Email;
+    };
+    // quick filter - filter globally across multiple columns with the same input
+    private Func<WaitlistSignup, bool> _quickFilter => x =>
+    {
+        if (_applyConsentFilter && !x.UpdateConsent)
+            return false;
+        
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.Email.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.Email.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if ($"{x.Email} {x.CreatedAt}".Contains(_searchString))
+            return true;
+        
+        return false;
+    };
+
+    private async Task<WaitlistSignup?> HandleDeleteSignup(WaitlistSignup signup)
+    {
+        try
+        {
+            using var scope = ServiceProvider.CreateScope();
+            var scopedContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var userToRemove = await scopedContext.WaitlistSignups.FindAsync(signup.Id);
+            if (userToRemove == null)
+            {
+                Snackbar.Add("Item not found. Unable to delete.", Severity.Warning);
+                return null;
+            }
+
+            scopedContext.WaitlistSignups.Remove(userToRemove);
+            await scopedContext.SaveChangesAsync();
+
+            await LoadDataAsync();
+            
+            Snackbar.Add($"{signup.Email} deleted successfully!", Severity.Success);
+            return userToRemove;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while deleting signup: {ex.Message}");
+            Snackbar.Add("An error occurred while deleting the item.", Severity.Error);
+            return null;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+    
+    void RowClicked(DataGridRowClickEventArgs<WaitlistSignup> args)
+    {
+        _events.Insert(0, $"Event = RowClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
+    }
+
+    void RowRightClicked(DataGridRowClickEventArgs<WaitlistSignup> args)
+    { 
+        _events.Insert(0, $"Event = RowRightClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
+    }     
+
+    private async Task OnSelectedItemsChangedHandler(HashSet<WaitlistSignup> items)
+    {
+        selectedItemsHashSet = items;
+        await OnSelectedItemsChanged.InvokeAsync(selectedItemsHashSet);
+    }
+
+    private async Task LoadDataAsync()
+    {
+        using var scope = ServiceProvider.CreateScope();
+        var scopedContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        Elements = await scopedContext.WaitlistSignups
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync();
+
+        StateHasChanged(); 
+    }
+
+}
