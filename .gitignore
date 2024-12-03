@@ -2,7 +2,9 @@
 .env
 
 ### SQLite DB file ###
-.db
+*.db
+*.db-shm
+*.db-wal
 
 ### DotnetCore ###
 # .NET Core build folders
