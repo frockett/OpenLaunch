@@ -1,0 +1,59 @@
+@using System.ComponentModel.DataAnnotations
+@using System.Text.RegularExpressions
+@using MudBlazor
+@using Color = MudBlazor.Color
+<MudDialog>
+    <DialogContent>
+        <MudTextField Label="Email"
+                      @bind-Value="Email"
+                      Required="true"
+                      InputType="InputType.Email"
+                      ErrorText="Please enter a valid email address."
+                      Immediate="true"
+                      DebounceInterval="1000"
+                      Validation="@(new Func<string?, string?>(ValidateEmail))"/>
+        <MudCheckBox @bind-Value="WantsUpdates" Label="Wants Updates" />
+        <MudCheckBox @bind-Value="WantsBeta" Label="Wants Beta" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Submit" Color="Color.Primary">Submit</MudButton>
+        <MudButton OnClick="Cancel" Color="Color.Default">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    private string Email { get; set; }
+    private bool WantsUpdates { get; set; }
+    private bool WantsBeta { get; set; }
+    
+    private string? ValidateEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return "Email is required.";
+
+        var pattern = @"^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$";
+        var emailAttribute = new EmailAddressAttribute();
+        if (!emailAttribute.IsValid(email) || !Regex.IsMatch(email, pattern))
+            return "Please enter a valid email address.";
+
+        return null;
+    }
+    
+    private void Submit()
+    {
+        // ValidateEmail();
+
+        if (ValidateEmail(Email) != null)
+        {
+            return;
+        }
+        
+        MudDialog.Close(DialogResult.Ok(new { Email, WantsUpdates, WantsBeta }));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

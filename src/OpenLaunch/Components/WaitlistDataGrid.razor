@@ -2,11 +2,19 @@
 @using OpenLaunch.Data
 @using OpenLaunch.Models
 @using Microsoft.EntityFrameworkCore
-@using ButtonType = MudBlazor.ButtonType
+@using OpenLaunch.Components.Dialogs
+@using DialogService = MudBlazor.DialogService
+@using MudBlazor
+@using OpenLaunch.Models
+@using MudBlazor
+@using OpenLaunch.Models
+@using Serilog
 @using Color = MudBlazor.Color
+@using Size = MudBlazor.Size
 @using Variant = MudBlazor.Variant
 @inject IServiceProvider ServiceProvider
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <div style="height:calc(100vh - 120px); display:grid; grid-template-rows: minmax(0,1fr); ">
 <MudDataGrid T="WaitlistSignup" Height="88%" MultiSelection="true" SelectedItemsChanged="OnSelectedItemsChangedHandler" Items="@Elements" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter"
@@ -17,6 +25,7 @@
         <MudSwitch @bind-Value="_applyConsentFilter" Color="Color.Primary" Label="Hide Unsubscribed"></MudSwitch>
         <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="MudBlazor.Size.Medium" Class="mt-0"></MudTextField>
+        <MudButton Style="margin-left: 1rem;" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" OnClick="@HandleAddSignup">Add Sub</MudButton>
     </ToolBarContent>
     <Columns>
         <SelectColumn T="WaitlistSignup" />
@@ -87,6 +96,54 @@
         
         return false;
     };
+
+    private async Task HandleAddSignup()
+    {
+        var parameters = new DialogParameters();
+        var options = new MudBlazor.DialogOptions();
+        var dialog = await DialogService.ShowAsync<AddSubscriptionDialog>("Add Subscription", parameters, options);
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var subscriptionData = result.Data as dynamic;
+            WaitlistSignup newSignup = new WaitlistSignup
+            {
+                Email = subscriptionData.Email,
+                UpdateConsent = subscriptionData.WantsUpdates,
+                BetaConsent = subscriptionData.WantsBeta,
+            };
+
+            var addResult = await AddSignup(newSignup);
+
+            if (addResult == null)
+            {
+                Snackbar.Add("Something went wrong! The subscription was not added.", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add("Subscription added successfully!", Severity.Success);
+            await LoadDataAsync();
+        }
+    }
+    
+    private async Task<WaitlistSignup?> AddSignup(WaitlistSignup signup)
+    {
+        try
+        {
+            using var scope = ServiceProvider.CreateScope();
+            var scopedContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await scopedContext.WaitlistSignups.AddAsync(signup);
+            await scopedContext.SaveChangesAsync();
+            return signup;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "An error occurred while adding manual subscription.");
+            return null;
+        }
+    }
 
     private async Task<WaitlistSignup?> HandleDeleteSignup(WaitlistSignup signup)
     {
