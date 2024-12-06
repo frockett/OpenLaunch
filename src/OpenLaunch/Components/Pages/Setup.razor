@@ -12,13 +12,13 @@
 @inject ISnackbar Snackbar
 @inject FromAddressService FromAddressService
 
-<MudGrid Spacing="12" Style="min-height: 90vh; width: 100%; padding: 0.5rem; margin: 0 auto;">
-    <MudItem xs="12" md="3">
-        <MudPaper Style="padding: 1rem;">
+<MudGrid Spacing="6" Style="min-height: 90vh; width: 100%; padding: 0.5rem; margin: auto;">
+    <MudItem Class="d-flex flex-column justify-content-center align-items-start" xs="12" md="3">
+        <MudPaper Class="mud-width-full" Style="padding: 1rem;">
             <AddFromAddressForm @ref="addFromAddressForm" VerifiedIdentities="VerifiedIdentities" OnFromAddressAdded="AddFromAddressAsync"/>
         </MudPaper>
 
-        <MudPaper Style="padding: 1rem; margin-top: 2rem; display: flex; flex-direction: column; gap: 0.5rem;">
+        <MudPaper Style="width: 100%; padding: 1rem; margin-top: 2rem; display: flex; flex-direction: column; gap: 0.5rem;">
             <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <MudText Typo="Typo.h6">Verified Identities</MudText>
                 <div>
@@ -39,8 +39,8 @@
         </MudPaper>
     </MudItem>
 
-    <MudItem xs="12" md="3">
-        <MudPaper Class="p-5">
+    <MudItem Class="d-flex" xs="12" md="3">
+        <MudPaper Class="p-5" Style="width: 100%;">
             <FromAddressesTable FromAddresses="FromAddresses" OnDelete="DeleteFromAddress" />
         </MudPaper>
     </MudItem>
