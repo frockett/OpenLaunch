@@ -4,6 +4,7 @@
 @using OpenLaunch.Services
 @using OpenLaunch.Utils
 @using OpenLaunch.Models
+@using Align = MudBlazor.Align
 @using Color = MudBlazor.Color
 @using DialogOptions = MudBlazor.DialogOptions
 @using Size = MudBlazor.Size
@@ -15,13 +16,23 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ISnackbar Snackbar
 @inject Microsoft.Extensions.Options.IOptions<EmailSettings> EmailSettingsOptions
+@inject FromAddressService FromAddressService
 
 <div style="display:flex; width: 100%; padding: 1rem; justify-content: space-between; gap: 2rem;">
     <div style="display: flex; flex-direction: column; width: 100%; gap: 1rem;">
         <div style="display: flex; gap: 2rem; align-items: center; justify-content: start">
             <MudTextField @bind-Value="@displayName" Placeholder="My App noreply" Label="Display Name" Variant="MudBlazor.Variant.Text"></MudTextField>
-            <MudAutocomplete T="string" Label="From Address" @bind-Value="@fromAddress"
-                             SearchFunc="@Search1" ResetValueOnEmptyText="true"/>
+            <MudAutocomplete T="string"
+                             Label="From Address"
+                             @bind-Value="@fromAddress"
+                             SearchFunc="@Search1"
+                             ResetValueOnEmptyText="true">
+                <NoItemsTemplate>
+                    <MudText Align="Align.Center" Class="px-4 py-1">
+                        @GetNoItemsMessage
+                    </MudText>
+                </NoItemsTemplate>
+            </MudAutocomplete>
             <MudTextField @bind-Value="@subject" Label="Subject" Variant="MudBlazor.Variant.Text"></MudTextField>
         </div>
         <RadzenHtmlEditor @ref="htmlEditor" @bind-Value=@htmlValue style="flex: 1; min-height: 0; width: 100%;" Input=@OnInput Change=@OnChange Paste=@OnPaste UploadComplete="@OnUploadComplete" Execute=@OnExecute 
@@ -71,11 +82,11 @@
     private bool isSending = false;
 
     // For release version this should pull from a database.
-    private List<string> fromAddresses;
+    private List<FromAddress?> fromAddresses;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        fromAddresses = EmailSettingsOptions.Value.FromAddresses;
+        fromAddresses = await FromAddressService.FetchAllAsync();
     }
 
     private async Task ShowPreview()
@@ -113,8 +124,10 @@
     private async Task<IEnumerable<string>> Search1(string value, CancellationToken token)
     {
         if (string.IsNullOrEmpty(value))
-            return fromAddresses;
-        return fromAddresses.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+            return fromAddresses.Select(x => x.Address).ToList();
+        return fromAddresses
+            .Select(x=> x.Address)
+            .Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
     }
     
     string htmlValue = @"<div style=""padding: 24px 36px; min-width: 320px; max-width: 600px; margin: 0 auto;"">
@@ -127,6 +140,27 @@
         <img src=""https://i.ibb.co/Fxjd2jC/resellmatepurple.png"" alt=""Resellmate"" border=""0"" width=""200"">
     </div>
     </div>";
+    
+    private RenderFragment GetNoItemsMessage
+    {
+        get
+        {
+            if (fromAddresses == null || !fromAddresses.Any())
+            {
+                return builder =>
+                {
+                    builder.AddContent(0, "No addresses found. Add some on the setup page.");
+                };
+            }
+            else
+            {
+                return builder =>
+                {
+                    builder.AddContent(0, "No matching addresses found.");
+                };
+            }
+        }
+    }
     
     void OnPaste(HtmlEditorPasteEventArgs args)
     {

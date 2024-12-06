@@ -69,6 +69,7 @@ builder.Services.AddScoped<AmazonSimpleEmailServiceV2Client>(sp =>
 builder.Services.AddScoped<IEmailService, AWSEmailService>();
 builder.Services.AddScoped<AWSDataFetching>();
 builder.Services.AddScoped<AdminUserSeeder>();
+builder.Services.AddScoped<FromAddressService>();
 
 // Unsubscribe Endpoint Services
 builder.Services.AddScoped<UnsubscribeHandler>();

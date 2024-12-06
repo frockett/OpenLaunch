@@ -1,0 +1,80 @@
+@using Amazon.SimpleEmailV2.Model
+@using MudBlazor
+@using Color = MudBlazor.Color
+@using Variant = MudBlazor.Variant
+
+<MudText Typo="Typo.h6">Add From Address</MudText>
+<MudForm @ref="form" Style="gap: 2rem; margin-top: 1rem;">
+    <MudTextField T="string"
+                     Label="From Address"
+                     @bind-Value="NewFromAddress"
+                     Required="true"
+                     InputType="InputType.Email"
+                     Validation="@(new Func<string?, string?>(ValidateEmail))"
+                     Immediate="true"
+                     DebounceInterval="300"
+                     ErrorText="Please provide a valid email address."
+                     Placeholder="Enter a valid email address"/>
+    <MudButton OnClick="HandleSubmit" Type="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Add</MudButton>
+</MudForm>
+
+@code {
+    [Parameter] public List<string> VerifiedIdentities { get; set; } = new();
+    [Parameter] public EventCallback<string> OnFromAddressAdded { get; set; }
+    [Parameter] public EventCallback<string> OnValueAppended { get; set; }
+
+    private MudForm form;
+    private string NewFromAddress;
+
+    public void AppendValue(string value)
+    {
+        if (!string.IsNullOrEmpty(NewFromAddress))
+        {
+            NewFromAddress += $"{value}";
+        }
+        else
+        {
+            NewFromAddress = value;
+        }
+    }
+    
+    private string? ValidateEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return "Email is required.";
+        
+        var pattern = @"^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$";
+        return System.Text.RegularExpressions.Regex.IsMatch(email, pattern)
+            ? null
+            : "Invalid email format.";
+    }
+
+    private async Task HandleSubmit()
+    {
+        Console.WriteLine($"FROM ADDRESS SUBMITTED: {NewFromAddress}");
+        if (string.IsNullOrEmpty(ValidateEmail(NewFromAddress)))
+        {
+            await OnFromAddressAdded.InvokeAsync(NewFromAddress);
+            NewFromAddress = string.Empty; // Reset the form
+        }
+    }
+    
+    
+    private void DebugSubmit()
+    {
+        Console.WriteLine("Form submit triggered.");
+        Console.WriteLine($"Input: {NewFromAddress}");
+        if (form.IsValid)
+        {
+            Console.WriteLine("Form is valid.");
+        }
+        else
+        {
+            Console.WriteLine("Form is invalid.");
+            foreach (var error in form.Errors)
+            {
+                Console.WriteLine($"Validation Error: {error}");
+            }
+        }
+    }
+}

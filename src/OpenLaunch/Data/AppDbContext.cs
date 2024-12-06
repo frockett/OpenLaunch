@@ -12,19 +12,10 @@ public class AppDbContext : IdentityDbContext<AppUser>
     }
     
     public DbSet<WaitlistSignup> WaitlistSignups { get; set; }
+    public DbSet<FromAddress> FromAddresses { get; set; }
     
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        
-        // List<IdentityRole> roles = new List<IdentityRole>
-        // {
-        //     new IdentityRole {
-        //         Name = "Admin",
-        //         NormalizedName = "ADMIN"
-        //     }
-        // };
-        //
-        // builder.Entity<IdentityRole>().HasData(roles);
     }
 }

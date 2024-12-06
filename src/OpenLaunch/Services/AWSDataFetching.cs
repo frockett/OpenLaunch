@@ -1,5 +1,6 @@
 using Amazon.SimpleEmailV2;
 using Amazon.SimpleEmailV2.Model;
+using Serilog;
 
 namespace OpenLaunch.Services;
 
@@ -39,5 +40,26 @@ public class AWSDataFetching
         }
         
         return await _sesClient.BatchGetMetricDataAsync(request);
+    }
+
+    public async Task<List<IdentityInfo>> ListIdentitiesAsync()
+    {
+        var identityType = IdentityType.DOMAIN;
+        var result = new List<IdentityInfo>();
+
+        try
+        {
+            var response = await _sesClient.ListEmailIdentitiesAsync(
+                new ListEmailIdentitiesRequest
+                { 
+                });
+            result = response.EmailIdentities;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to fetch email identities");
+        }
+
+        return result;
     }
 }
