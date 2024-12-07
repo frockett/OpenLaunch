@@ -94,9 +94,9 @@
     public class EmailPreviewModel
     {
         public string? DisplayName { get; set; } = "noreply";
-        public string FromAddress { get; set; }
-        public List<string> ToAddresses { get; set; }
-        public string Subject { get; set; }
+        public string? FromAddress { get; set; }
+        public List<string> ToAddresses { get; set; } = new();
+        public string? Subject { get; set; }
         public string HtmlContent { get; set; }
     }
     private IEnumerable<WaitlistSignup> selectedItems;
@@ -124,7 +124,7 @@
     {
         var dialogOptions = new MudBlazor.DialogOptions 
         { 
-            MaxWidth = MaxWidth.Medium,
+            MaxWidth = MaxWidth.Large,
             FullWidth = true,
             CloseButton = true,
             BackdropClick = true,
@@ -134,7 +134,7 @@
         {
             { x => x.EmailData, new EmailPreviewModel 
                 {
-                    FromAddress = fromAddress.Address,
+                    FromAddress = fromAddress?.Address ?? null,
                     ToAddresses = selectedEmails,
                     Subject = subject,
                     HtmlContent = htmlValue
@@ -218,7 +218,7 @@
             {
                 return builder =>
                 {
-                    builder.AddContent(0, "No addresses found. Add some on the setup page.");
+                    builder.AddContent(0, "No addresses found. Add some on the templates/identities page.");
                 };
             }
             else

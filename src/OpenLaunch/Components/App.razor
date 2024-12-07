@@ -1,4 +1,8 @@
-﻿<!DOCTYPE html>
+﻿@using OpenLaunch.Services
+@inject DarkModeService DarkModeService
+@inject ThemeService ThemeService
+
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -7,12 +11,10 @@
     <base href="/"/>
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
-    @* <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]"/> *@
-    @* <link rel="stylesheet" href="@Assets["app.css"]"/> *@
     <link rel="stylesheet" href="@Assets["OpenLaunch.styles.css"]"/>
     <ImportMap/>
     <link rel="icon" type="image/png" href="favicon.png"/>
-    <RadzenTheme Theme="material" @rendermode="InteractiveServer"></RadzenTheme>
+    <RadzenTheme Theme="material-dark" @rendermode="InteractiveServer"></RadzenTheme>
     <HeadOutlet @rendermode="PageRenderMode"/>
 </head>
 
@@ -22,7 +24,6 @@
 <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 <script src="_content/Extensions.MudBlazor.StaticInput/NavigationObserver.js"></script>
 <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Radzen.Colors).Assembly.GetName().Version)"></script>
-
 </body>
 
 </html>
@@ -32,5 +33,18 @@
 
     private IComponentRenderMode? PageRenderMode =>
         HttpContext.AcceptsInteractiveRouting() ? InteractiveServer : null;
-    
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        var theme = DarkModeService.IsDarkMode ? "material-dark" : "material";
+        ThemeService.SetTheme(theme, true);
+        ThemeService.ThemeChanged += OnThemeChanged;
+    }
+
+    private void OnThemeChanged()
+    {
+        StateHasChanged();
+    }
+
 }

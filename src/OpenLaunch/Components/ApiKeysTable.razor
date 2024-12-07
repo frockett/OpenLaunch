@@ -1,0 +1,65 @@
+@using OpenLaunch.Models
+@using OpenLaunch.Services
+@using Color = MudBlazor.Color
+@using Size = MudBlazor.Size
+@inject IJSRuntime Js
+@inject ISnackbar Snackbar
+
+<MudTable Items="ApiKeys" Dense="true">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Active API Keys</MudText>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Key</MudTh>
+        <MudTh>Created</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Name</MudTd>
+        <MudTd>@context.Description</MudTd>
+        <MudTd Style="font-size: 0.8rem;">
+            @if (_visibleKeys.Contains(context.Id))
+            {
+                @context.Key
+                <MudIconButton Style="margin-left: 6px;" Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" OnClick="() => CopyToClipboard(context.Key)"/>
+            }
+            else
+            {
+                @(new string('*', context.Key.Length))
+            }
+            <MudIconButton Icon="@(_visibleKeys.Contains(context.Id) ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)" OnClick="@(() => ToggleVisibility(context.Id))"/>
+        </MudTd>
+        <MudTd>@context.CreatedAt.ToLocalTime().ToShortDateString()</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteKey(context))"/>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    [Parameter] public List<ApiKey> ApiKeys { get; set; }
+    [Parameter] public EventCallback<ApiKey> OnDelete { get; set; }
+
+    private HashSet<int> _visibleKeys = new();
+
+    private void ToggleVisibility(int id)
+    {
+        if (_visibleKeys.Contains(id))
+            _visibleKeys.Remove(id);
+        else
+            _visibleKeys.Add(id);
+    }
+    
+    private async Task CopyToClipboard(string text)
+    {
+        await Js.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        Snackbar.Add("Key copied to clipboard!", Severity.Normal);
+    }
+
+    private async Task DeleteKey(ApiKey key)
+    {
+        await OnDelete.InvokeAsync(key);
+    }
+}

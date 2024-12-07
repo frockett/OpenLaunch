@@ -1,0 +1,38 @@
+@using OpenLaunch.Models
+@using OpenLaunch.Services
+@using Color = MudBlazor.Color
+@using Variant = MudBlazor.Variant
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <MudText Typo="Typo.h6">Create New API Key</MudText>
+        <MudTextField @bind-Value="_name" Label="Name" Variant="Variant.Outlined"/>
+        <MudTextField @bind-Value="_description" Label="Description" Variant="Variant.Outlined"/>
+        <MudButton Style="margin-top: 0.5rem;" Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateKey">Create</MudButton>
+    </div>
+</MudPaper>
+
+@code {
+        private string _name;
+        private string _description;
+
+        [Inject] ApiKeyService ApiKeyService { get; set; }
+        [Parameter] public EventCallback<ApiKey> OnApiKeyCreated { get; set; }
+
+        private async Task CreateKey()
+        {
+            var key = await ApiKeyService.CreateApiKeyAsync(_name, _description);
+            if (key != null)
+            {
+                await OnApiKeyCreated.InvokeAsync(key);
+                _name = string.Empty;
+                _description = string.Empty;
+                Snackbar.Add("API key created!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Whoops! Something went wrong.", Severity.Error);
+            }
+        }
+}

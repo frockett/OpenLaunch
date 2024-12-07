@@ -16,6 +16,7 @@ using OpenLaunch.Features.Upload;
 using OpenLaunch.Interfaces;
 using OpenLaunch.Data;
 using OpenLaunch.Features.Subscribe;
+using OpenLaunch.Filters;
 using OpenLaunch.Models;
 using OpenLaunch.Services;
 using Radzen;
@@ -71,6 +72,10 @@ builder.Services.AddScoped<AWSDataFetching>();
 builder.Services.AddScoped<AdminUserSeeder>();
 builder.Services.AddScoped<FromAddressService>();
 builder.Services.AddScoped<EmailTemplateService>();
+builder.Services.AddScoped<ApiKeyService>();
+builder.Services.AddScoped<ApiKeyFilter>();
+builder.Services.AddSingleton<DarkModeService>();
+
 
 // Unsubscribe Endpoint Services
 builder.Services.AddScoped<UnsubscribeHandler>();
@@ -146,6 +151,12 @@ app.MapAdditionalIdentityEndpoints();
 app.MapUnsubscribeEndpoints();
 app.MapUploadEndpoints();
 app.MapSubscribeEndpoints();
+
+using (var scope = app.Services.CreateScope())
+{
+    var themeService = scope.ServiceProvider.GetRequiredService<ThemeService>();
+    themeService.SetTheme("material");
+}
 
 using (var scope = app.Services.CreateScope())
 {

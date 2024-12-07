@@ -15,6 +15,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<WaitlistSignup> WaitlistSignups { get; set; }
     public DbSet<FromAddress> FromAddresses { get; set; }
     public DbSet<EmailTemplate> EmailTemplates { get; set; }
+    public DbSet<ApiKey> ApiKeys { get; set; }
     
     protected override void OnModelCreating(ModelBuilder builder)
     {

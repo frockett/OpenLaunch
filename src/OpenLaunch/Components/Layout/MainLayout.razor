@@ -1,10 +1,13 @@
 ﻿@using Microsoft.AspNetCore.Authorization
+@using Mono.TextTemplating
+@using OpenLaunch.Services
 @using Color = MudBlazor.Color
 @inherits LayoutComponentBase
 @attribute [Authorize]
+@inject DarkModeService DarkModeService
 
     @* Required *@
-    <MudThemeProvider @rendermode="InteractiveServer" />
+    <MudThemeProvider Theme="@_theme" IsDarkMode="@DarkModeService.IsDarkMode" @rendermode="InteractiveServer" />
     <MudPopoverProvider @rendermode="InteractiveServer" />
     @* Needed for dialogs *@
     <RadzenDialog></RadzenDialog>
@@ -20,8 +23,9 @@
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="MudBlazor.Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
             <MudText Typo="Typo.h5">OpenLaunch</MudText>
             <MudSpacer></MudSpacer>
+            <MudIconButton Icon="@(DarkModeService.IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" Color="Color.Inherit" OnClick="ToggleDarkMode" />
         </MudAppBar>
-        <MudDrawer Color="Color.Primary" @bind-Open="@_drawerOpen" Breakpoint="Breakpoint.Xl" ClipMode="DrawerClipMode.Always" Variant="@DrawerVariant.Responsive" Elevation="2">
+        <MudDrawer Color="@(DarkModeService.IsDarkMode ? Color.Dark : Color.Primary)" @bind-Open="@_drawerOpen" Breakpoint="Breakpoint.Xl" ClipMode="DrawerClipMode.Always" Variant="@DrawerVariant.Responsive" Elevation="2">
             <MudDrawerHeader>
                 <MudText Typo="Typo.h5" class="mt-1">
                     Menu
@@ -35,10 +39,12 @@
     </MudLayout>
     
     @code {
-        bool _drawerOpen = true;
+        private bool IsInitialized;
+        private bool _drawerOpen = true;
+        private MudTheme _theme = new MudTheme();
+        
+        void DrawerToggle() => _drawerOpen = !_drawerOpen;
 
-        void DrawerToggle()
-        {
-            _drawerOpen = !_drawerOpen;
-        }
+        async Task ToggleDarkMode() => await DarkModeService.Toggle();
+
     }
