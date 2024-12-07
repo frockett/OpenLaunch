@@ -122,15 +122,6 @@
     {
         await UpdateDateRangeAsync();
         
-        // endDate = DateTime.UtcNow.Date;
-        // startDate = endDate.AddDays(-6);
-        //
-        // var dateRange = Enumerable.Range(0, (endDate - startDate).Days + 1)
-        //     .Select(offset => startDate.AddDays(offset))
-        //     .ToList();
-        //
-        // await PrepareMetricDataAsync(dateRange);
-        
         using var scope = ServiceProvider.CreateScope();
         var scopedContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
@@ -163,7 +154,6 @@
         
         emailMetricsData = new Dictionary<string, List<MetricLineChart.MetricResult>>(
             awsData.Results
-            // .Where(result => result.Timestamps.Any())
             .ToDictionary(
                 result => result.Id,
                 result =>
@@ -183,10 +173,6 @@
                 }
             )
             );
-        // Console.WriteLine($@"BATCH METRICS RESPONSE: {JsonSerializer.Serialize(awsData, new JsonSerializerOptions
-        // {
-        //     WriteIndented = true
-        // })}");
     }
 
 

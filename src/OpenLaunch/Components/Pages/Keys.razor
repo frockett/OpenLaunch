@@ -6,9 +6,20 @@
     <MudGrid>
         <MudItem xs="12">
             <MudPaper Class="pa-16 ma-2">
-                <h3>Instructions</h3>
-                <div>Create your API key before start sending requests to the /api/subscribe endpoint.</div>
-                <div>The endpoint expects an API key in the header <em>x-api-key</em></div>
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" md="4" Style="padding: 1rem;">
+                        <h3>Create your API keys</h3>
+                        <div style="margin-top: 1rem;">Create your API key before start sending requests to the /api/subscribe endpoint.</div>
+                    </MudItem>
+                    <MudItem xs="12" md="4" Style="padding: 1rem;">
+                        <h3>Use in subscribe request headers</h3>
+                        <div style="margin-top: 1rem;">The subscribe endpoint expects a key in the <em>x-api-key</em> header.</div>
+                    </MudItem>
+                    <MudItem xs="12" md="4" Style="padding: 1rem;">
+                        <h3>Rotate your keys regularly</h3>
+                        <div style="margin-top: 1rem;">Don't forget to regularly rotate your API keys for security.</div>
+                    </MudItem>
+                </MudGrid>
             </MudPaper>
         </MudItem>
     </MudGrid>

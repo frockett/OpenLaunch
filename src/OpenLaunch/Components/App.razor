@@ -33,7 +33,8 @@
 
     private IComponentRenderMode? PageRenderMode =>
         HttpContext.AcceptsInteractiveRouting() ? InteractiveServer : null;
-
+    
+    
     protected override void OnInitialized()
     {
         base.OnInitialized();

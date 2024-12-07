@@ -1,0 +1,21 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+
+<RadzenHtmlEditor class="custom-editor" @ref="htmlEditor" @bind-Value=@htmlValue style="flex: 1; min-height: 500px; width: 100%;" 
+                  UploadHeaders="@(new Dictionary<string, string> { {"RequestVerificationToken", Antiforgery.GetAndStoreTokens(HttpContextAccessor.HttpContext).RequestToken }
+                                 })"
+                  UploadUrl="api/upload-image">
+</RadzenHtmlEditor>
+
+<style>
+    .custom-editor .rz-html-editor * {
+        color: inherit;
+        background-color: lime;
+    }
+</style>
+
+@code {
+    private RadzenHtmlEditor htmlEditor;
+
+    private string htmlValue = "<div></div>";
+}

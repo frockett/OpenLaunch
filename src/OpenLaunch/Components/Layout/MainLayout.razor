@@ -5,6 +5,8 @@
 @inherits LayoutComponentBase
 @attribute [Authorize]
 @inject DarkModeService DarkModeService
+@inject ThemeService ThemeService
+@inject IJSRuntime JSRuntime
 
     @* Required *@
     <MudThemeProvider Theme="@_theme" IsDarkMode="@DarkModeService.IsDarkMode" @rendermode="InteractiveServer" />
@@ -42,6 +44,18 @@
         private bool IsInitialized;
         private bool _drawerOpen = true;
         private MudTheme _theme = new MudTheme();
+        
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+            ThemeService.ThemeChanged += OnThemeChanged;
+        }
+
+        // CURRENTLY BROKEN
+        private void OnThemeChanged()
+        {
+            InvokeAsync(StateHasChanged);
+        }
         
         void DrawerToggle() => _drawerOpen = !_drawerOpen;
 

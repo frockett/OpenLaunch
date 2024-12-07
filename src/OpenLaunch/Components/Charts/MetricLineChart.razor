@@ -1,28 +1,47 @@
 @using ApexCharts
+@using OpenLaunch.Services
+@using Theme = ApexCharts.Theme
+
 @rendermode InteractiveServer
 
-<ApexChart TItem="MetricResult" Title="@Title" Height="300">
+@inject DarkModeService DarkModeService
+
+@implements IDisposable
+
+<ApexChart TItem="MetricResult" Title="@Title" Height="300" Options="@options" @ref=chart>
     @if (SeriesData != null)
     {
-    @foreach (var series in SeriesData)
-    {
-    <ApexPointSeries TItem="MetricResult"
-                     Items="series.Value"
-                     Name="@FriendlyNames[series.Key]"
-                     SeriesType="SeriesType.Line"
-                     XValue="@(e => e.Timestamp.ToString("MMM dd"))"
-                     YValue="@(e => e.Value)" />
-    }
+        @foreach (var series in SeriesData)
+        {
+            <ApexPointSeries TItem="MetricResult"
+                             Items="series.Value"
+                             Name="@FriendlyNames[series.Key]"
+                             SeriesType="SeriesType.Line"
+                             XValue="@(e => e.Timestamp.ToString("MMM dd"))"
+                             YValue="@(e => e.Value)" />
+        }
     }
     else
     {
-    <text>Loading data...</text>
+        <text>Loading data...</text>
     }
 </ApexChart>
+
+<style>
+    .apexcharts-canvas > svg {
+        background-color: inherit !important;
+    }
+
+    .apexcharts-canvas > svg {
+        background-color: inherit !important;
+    }
+</style>
 
 @code {
     [Parameter]
     public string Title { get; set; }
+    private ApexChartOptions<MetricResult> options;
+    private ApexChart<MetricResult> chart;
 
     [Parameter]
     public Dictionary<string, List<MetricResult>> SeriesData { get; set; }
@@ -37,16 +56,38 @@
         { "permanentBounce_6", "Permanent Bounce" },
         { "complaints_7", "Complaints" }
     };
+    
+    protected override void OnInitialized()
+    {
+        options = new ApexChartOptions<MetricResult>
+        {
+            Theme = new Theme
+            {
+                Mode = DarkModeService.IsDarkMode ? Mode.Dark : Mode.Light
+            }
+        };
+        
+        Console.WriteLine($"THEME IS: {options.Theme.Mode.ToString()}");
+
+        DarkModeService.OnChange += UpdateChartTheme;
+    }
+    
+    private async Task UpdateChartTheme()
+    {
+        Console.WriteLine("THEME CHANGED!!!");
+        options.Theme.Mode = DarkModeService.IsDarkMode ? Mode.Dark : Mode.Light;
+        Console.WriteLine($"THEME IS: {options.Theme.Mode.ToString()}");
+        await chart.RenderAsync();
+    }
+    
+    public void Dispose()
+    {
+        DarkModeService.OnChange -= UpdateChartTheme;
+    }
 
     public class MetricResult
     {
         public DateTime Timestamp { get; set; }
         public long Value { get; set; }
-    }
-    
-    protected override void OnParametersSet()
-    {
-        Console.WriteLine($"MetricLineChart received {SeriesData?.Count} series");
-        base.OnParametersSet();
     }
 }

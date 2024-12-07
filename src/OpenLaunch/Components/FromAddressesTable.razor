@@ -4,10 +4,13 @@
 @using Size = MudBlazor.Size
 
 <MudTable Items="FromAddresses" Dense="true" Hover="true">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Active From Addresses</MudText>
+    </ToolBarContent>
     <HeaderContent>
         <MudTh>From Address</MudTh>
         <MudTh>Display Name</MudTh>
-        <MudTh>Options</MudTh>
+        <MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd>@context.Address</MudTd>

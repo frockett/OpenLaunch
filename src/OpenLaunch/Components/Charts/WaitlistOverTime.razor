@@ -1,24 +1,42 @@
 @using OpenLaunch.Data
 @using OpenLaunch.Models
 @using Microsoft.EntityFrameworkCore
+@using OpenLaunch.Services
+@using Theme = ApexCharts.Theme
+
 @inject AppDbContext _context
 @inject IServiceProvider ServiceProvider
+@inject DarkModeService DarkModeService
 
-<ApexChart TItem="SignupData"
-           Title="Waitlist Signups"
-           Height="300">
+@implements IDisposable
 
-    <ApexPointSeries TItem="SignupData"
-                     Items="SignupStats"
-                     Name="New Users"
-                     SeriesType="SeriesType.Line"
-                     XValue="@(e => e.Date.ToString("MMM dd"))"
-                     YValue="@(e => e.Count)"
-    />
-</ApexChart>
+<div class="apex-chart-container @(DarkModeService.IsDarkMode ? "dark-mode" : "light-mode")">
+    <ApexChart TItem="SignupData"
+               @ref=chart
+               Title="Waitlist Signups"
+               Height="300"
+               Options="@options">
+
+        <ApexPointSeries TItem="SignupData"
+                         Items="SignupStats"
+                         Name="New Users"
+                         SeriesType="SeriesType.Line"
+                         XValue="@(e => e.Date.ToString("MMM dd"))"
+                         YValue="@(e => e.Count)"
+        />
+    </ApexChart>
+</div>
+
+<style>
+    .apexcharts-canvas > svg {
+        background-color: inherit !important;
+    }
+</style>
 
 @code {
 private List<SignupData> SignupStats = new();
+private ApexChartOptions<SignupData> options;
+private ApexChart<SignupData> chart;
 
 [Parameter]
 public DateTime StartDate { get; set; }
@@ -28,7 +46,22 @@ public DateTime EndDate { get; set; }
 
 protected override async Task OnInitializedAsync()
 {
+    options = new ApexChartOptions<SignupData>
+    {
+        Theme = new Theme
+        {
+            Mode = DarkModeService.IsDarkMode ? Mode.Dark : Mode.Light
+        }
+    };
+
+    DarkModeService.OnChange += UpdateChartTheme;
     await LoadWaitlistStatsAsync();
+}
+
+private async Task UpdateChartTheme()
+{
+    options.Theme.Mode = DarkModeService.IsDarkMode ? Mode.Dark : Mode.Light;
+    await chart.RenderAsync();
 }
 
 private async Task LoadWaitlistStatsAsync()
@@ -71,10 +104,14 @@ private async Task LoadWaitlistStatsAsync()
     }).ToList();
 }
 
-// Class to hold the signup data
+public void Dispose()
+{
+    DarkModeService.OnChange -= UpdateChartTheme;
+}
+
 public class SignupData
 {
-public DateTime Date { get; set; }
-public int Count { get; set; }
+    public DateTime Date { get; set; }
+    public int Count { get; set; }
 }
 }
