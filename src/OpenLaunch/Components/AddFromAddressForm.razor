@@ -1,30 +1,42 @@
 @using Amazon.SimpleEmailV2.Model
 @using MudBlazor
+@using OpenLaunch.Models
 @using Color = MudBlazor.Color
 @using Variant = MudBlazor.Variant
 
 <MudText Typo="Typo.h6">Add From Address</MudText>
 <MudForm @ref="form" Style="gap: 2rem; margin-top: 1rem;">
     <MudTextField T="string"
-                     Label="From Address"
-                     @bind-Value="NewFromAddress"
-                     Required="true"
-                     InputType="InputType.Email"
-                     Validation="@(new Func<string?, string?>(ValidateEmail))"
-                     Immediate="true"
-                     DebounceInterval="300"
-                     ErrorText="Please provide a valid email address."
-                     Placeholder="Enter a valid email address"/>
+                  Label="From Address"
+                  @bind-Value="NewFromAddress"
+                  Required="true"
+                  InputType="InputType.Email"
+                  Validation="@(new Func<string?, string?>(ValidateEmail))"
+                  Immediate="true"
+                  DebounceInterval="300"
+                  ErrorText="Please provide a valid email address."
+                  Placeholder="Enter a valid email address"/>
+    <MudTextField T="string"
+                  Label="Display Name"
+                  @bind-Value="NewDisplayName"
+                  Required="false"
+                  InputType="InputType.Text"
+                  Immediate="true"
+                  MaxLength="40"
+                  ErrorText="Display names shouldn't exceed 40 characters and ideally should be less than 20" 
+                  Placeholder="Enter the email address display name"
+                  />
     <MudButton OnClick="HandleSubmit" Type="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Add</MudButton>
 </MudForm>
 
 @code {
     [Parameter] public List<string> VerifiedIdentities { get; set; } = new();
-    [Parameter] public EventCallback<string> OnFromAddressAdded { get; set; }
+    [Parameter] public EventCallback<CreateFromAddressDetails> OnFromAddressAdded { get; set; }
     [Parameter] public EventCallback<string> OnValueAppended { get; set; }
 
     private MudForm form;
     private string NewFromAddress;
+    private string NewDisplayName;
 
     public void AppendValue(string value)
     {
@@ -51,10 +63,11 @@
 
     private async Task HandleSubmit()
     {
-        Console.WriteLine($"FROM ADDRESS SUBMITTED: {NewFromAddress}");
         if (string.IsNullOrEmpty(ValidateEmail(NewFromAddress)))
         {
-            await OnFromAddressAdded.InvokeAsync(NewFromAddress);
+            var details = new CreateFromAddressDetails(NewFromAddress, NewDisplayName);
+            await OnFromAddressAdded.InvokeAsync(details);
+            NewDisplayName = string.Empty;
             NewFromAddress = string.Empty; // Reset the form
         }
     }

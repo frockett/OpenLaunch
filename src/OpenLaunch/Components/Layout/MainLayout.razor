@@ -18,13 +18,13 @@
     <MudLayout>
         <MudAppBar Elevation="1">
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="MudBlazor.Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-            My Application
+            <MudText Typo="Typo.h5">OpenLaunch</MudText>
             <MudSpacer></MudSpacer>
         </MudAppBar>
         <MudDrawer Color="Color.Primary" @bind-Open="@_drawerOpen" Breakpoint="Breakpoint.Xl" ClipMode="DrawerClipMode.Always" Variant="@DrawerVariant.Responsive" Elevation="2">
             <MudDrawerHeader>
                 <MudText Typo="Typo.h5" class="mt-1">
-                    Admin Dashboard
+                    Menu
                 </MudText>
             </MudDrawerHeader>
             <NavMenu></NavMenu>

@@ -10,4 +10,7 @@ public class FromAddress
     [EmailAddress] [Required] 
     public required string Address { get; set; }
     
+    [MaxLength(128)]
+    public string? DisplayName { get; set; }
+    
 }

@@ -17,16 +17,32 @@
 @inject ISnackbar Snackbar
 @inject Microsoft.Extensions.Options.IOptions<EmailSettings> EmailSettingsOptions
 @inject FromAddressService FromAddressService
+@inject EmailTemplateService EmailTemplateService
 
-<div style="display:flex; width: 100%; padding: 1rem; justify-content: space-between; gap: 2rem;">
+<div style="display:flex; flex-direction: column; width: 100%; padding: 1rem; justify-content: space-between; gap: 2rem;">
     <div style="display: flex; flex-direction: column; width: 100%; gap: 1rem;">
         <div style="display: flex; gap: 2rem; align-items: center; justify-content: start">
             <MudTextField @bind-Value="@displayName" Placeholder="My App noreply" Label="Display Name" Variant="MudBlazor.Variant.Text"></MudTextField>
-            <MudAutocomplete T="string"
+            <MudAutocomplete T="FromAddress"
                              Label="From Address"
-                             @bind-Value="@fromAddress"
+                             Value="@fromAddress"
+                             ValueChanged="OnFromAddressSelected"
                              SearchFunc="@Search1"
+                             ToStringFunc="address => address?.Address"
                              ResetValueOnEmptyText="true">
+                <ItemTemplate Context="address">
+                    @if (!string.IsNullOrEmpty(address.DisplayName))
+                    {
+                        @($"{address.DisplayName} - {address.Address}")
+                    }
+                    else
+                    {
+                        @address.Address
+                    }
+                </ItemTemplate>
+                <ItemSelectedTemplate Context="address">
+                    @address.Address
+                </ItemSelectedTemplate>
                 <NoItemsTemplate>
                     <MudText Align="Align.Center" Class="px-4 py-1">
                         @GetNoItemsMessage
@@ -34,8 +50,20 @@
                 </NoItemsTemplate>
             </MudAutocomplete>
             <MudTextField @bind-Value="@subject" Label="Subject" Variant="MudBlazor.Variant.Text"></MudTextField>
+            <MudAutocomplete T="string"
+                             Label="Email Template"
+                             Value="@emailTemplate"
+                             ValueChanged="OnTemplateSelected"
+                             SearchFunc="SearchTemplate"
+                             ResetValueOnEmptyText="true">
+                <NoItemsTemplate>
+                    <MudText Align="Align.Center" Class="px-4 py-1">
+                        No templates found
+                    </MudText>
+                </NoItemsTemplate>
+            </MudAutocomplete>
         </div>
-        <RadzenHtmlEditor @ref="htmlEditor" @bind-Value=@htmlValue style="flex: 1; min-height: 0; width: 100%;" Input=@OnInput Change=@OnChange Paste=@OnPaste UploadComplete="@OnUploadComplete" Execute=@OnExecute 
+        <RadzenHtmlEditor @ref="htmlEditor" @bind-Value=@htmlValue style="flex: 1; min-height: 500px; width: 100%;" Input=@OnInput Change=@OnChange Paste=@OnPaste UploadComplete="@OnUploadComplete" Execute=@OnExecute 
                           UploadHeaders="@(new Dictionary<string, string> { {"RequestVerificationToken", Antiforgery.GetAndStoreTokens(HttpContextAccessor.HttpContext).RequestToken }
                                               })"
                           UploadUrl="api/upload-image">
@@ -74,19 +102,22 @@
     private IEnumerable<WaitlistSignup> selectedItems;
     private List<string> selectedEmails = [];
     private string? subject;
-    private string? fromAddress;
+    private FromAddress? fromAddress;
     private string? displayName;
+    private string? emailTemplate;
 
     private string editorContent;
 
     private bool isSending = false;
-
-    // For release version this should pull from a database.
+    
     private List<FromAddress?> fromAddresses;
+    private List<EmailTemplate?> emailTemplates;
 
+    
     protected override async Task OnInitializedAsync()
     {
         fromAddresses = await FromAddressService.FetchAllAsync();
+        emailTemplates = await EmailTemplateService.GetAllAsync();
     }
 
     private async Task ShowPreview()
@@ -103,7 +134,7 @@
         {
             { x => x.EmailData, new EmailPreviewModel 
                 {
-                    FromAddress = fromAddress,
+                    FromAddress = fromAddress.Address,
                     ToAddresses = selectedEmails,
                     Subject = subject,
                     HtmlContent = htmlValue
@@ -121,19 +152,57 @@
         selectedEmails = selectedItems.Select(i => i.Email).ToList();
     }
     
-    private async Task<IEnumerable<string>> Search1(string value, CancellationToken token)
+    private void OnFromAddressSelected(FromAddress? selected)
+    {
+        if (selected == null)
+        {
+            fromAddress = null;
+            displayName = string.Empty;
+            return;
+        }
+
+        fromAddress = selected;
+        displayName = selected.DisplayName ?? string.Empty;
+    }
+
+    private void OnTemplateSelected(string value)
+    {
+        var selected = emailTemplates.FirstOrDefault(f => f?.Name == value);
+        
+        if (selected != null)
+        {
+            htmlValue = selected.HtmlContent;
+            emailTemplate = selected.Name;
+        }
+    }
+    
+    private async Task<IEnumerable<FromAddress>> Search1(string value, CancellationToken token)
     {
         if (string.IsNullOrEmpty(value))
-            return fromAddresses.Select(x => x.Address).ToList();
+            return fromAddresses;
+        
         return fromAddresses
-            .Select(x=> x.Address)
+           .Where(x => x.Address.Contains(value, StringComparison.InvariantCultureIgnoreCase) 
+                       || (x.DisplayName != null && x.DisplayName.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
+    }
+
+    private async Task<IEnumerable<string>> SearchTemplate(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+            return emailTemplates.Select(x => x.Name).ToList();
+
+        return emailTemplates
+            .Select(x => x.Name)
             .Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
     }
     
     string htmlValue = @"<div style=""padding: 24px 36px; min-width: 320px; max-width: 600px; margin: 0 auto;"">
-    <h2 style=""text-align:left"">Accelerated, smarter, and cost-effective Blazor development</h2>
-    <h3 style=""text-align:left"">Radzen Blazor Studio provides tons of productivity gains for Blazor developers</h3>
-    <h4 style=""text-align:left"">Get started today. Radzen Blazor Studio is free to use.</h4>
+    <h2 style=""text-align:left"">This is the default html.</h2>
+    <div><br></div>
+    <h3 style=""text-align:left"">OpenLaunch supports creating and using simple html templates for your emails!</h3>
+    <div><br></div>
+    <div style=""text-align:left"">You can create your own templates on the setup page and then use them here.</div>
+    <div style=""text-align:left"">Or you can just directly write your email here!</div>
     <div><br></div>
     <div>-- Crockett</div>    
     <div style=""text-align:center; padding-top: 48px;"">
@@ -145,7 +214,7 @@
     {
         get
         {
-            if (fromAddresses == null || !fromAddresses.Any())
+            if (!fromAddresses.Any())
             {
                 return builder =>
                 {
@@ -211,7 +280,7 @@
             return;
         }
 
-        if (string.IsNullOrEmpty(fromAddress))
+        if (string.IsNullOrEmpty(fromAddress.Address))
         {
             Snackbar.Add("You must select a from address.", Severity.Warning);
             return;
@@ -243,11 +312,10 @@
 
         try
         {
-            // Change state of Send button
             isSending = true;
             StateHasChanged();
             
-            var result = await EmailService.SendEmailAsync(fromAddress,
+            var result = await EmailService.SendEmailAsync(fromAddress.Address,
                 selectedEmails, subject, htmlValue, plaintext, displayName);
 
             var parameters = new DialogParameters
@@ -264,7 +332,6 @@
         }
         finally
         {
-            // Reset state of Send button
             isSending = false;
             StateHasChanged();
         }

@@ -6,10 +6,12 @@
 <MudTable Items="FromAddresses" Dense="true" Hover="true">
     <HeaderContent>
         <MudTh>From Address</MudTh>
+        <MudTh>Display Name</MudTh>
         <MudTh>Options</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd>@context.Address</MudTd>
+        <MudTd>@context.DisplayName</MudTd>
         <MudTd>
             <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDelete.InvokeAsync(context))">Delete</MudButton>
         </MudTd>

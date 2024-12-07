@@ -39,9 +39,8 @@
                 </MudTooltip>
             </CellTemplate>
         </PropertyColumn>
-        @* <PropertyColumn CellStyle="max-width: 120px;" Property="x => x.Email" Title="Email" /> *@
-        <PropertyColumn Property="x => x.UpdateConsent" Title="Wants Updates" />
-        <PropertyColumn Property="x => x.BetaConsent"  Title="Wants Beta" SortBy="@_sortBy" />
+        <PropertyColumn Property="x => x.UpdateConsent" Title="Updates" />
+        <PropertyColumn Property="x => x.BetaConsent"  Title="Beta" SortBy="@_sortBy" />
         <PropertyColumn Property="x => x.CreatedAt.ToShortDateString()" Title="Created" />
         <TemplateColumn CellClass="d-flex justify-end">
             <CellTemplate>

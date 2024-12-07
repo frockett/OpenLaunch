@@ -12,40 +12,52 @@
 @inject ISnackbar Snackbar
 @inject FromAddressService FromAddressService
 
-<MudGrid Spacing="6" Style="min-height: 90vh; width: 100%; padding: 0.5rem; margin: auto;">
-    <MudItem Class="d-flex flex-column justify-content-center align-items-start" xs="12" md="3">
-        <MudPaper Class="mud-width-full" Style="padding: 1rem;">
-            <AddFromAddressForm @ref="addFromAddressForm" VerifiedIdentities="VerifiedIdentities" OnFromAddressAdded="AddFromAddressAsync"/>
-        </MudPaper>
-
-        <MudPaper Style="width: 100%; padding: 1rem; margin-top: 2rem; display: flex; flex-direction: column; gap: 0.5rem;">
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <MudText Typo="Typo.h6">Verified Identities</MudText>
-                <div>
-                    <MudTooltip Style="width: 220px; text-wrap: wrap;" Text="These are the verified identities pulled from your configured email provider's API. This list may not be complete or accurate.">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
-                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                            <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/>
-                        </svg>
-                    </MudTooltip>
-                </div>
-            </div>
-            <MudList T="string">
-                @foreach (var identity in VerifiedIdentities)
-                {
-                    <MudListItem @onclick="() => AppendToForm(identity)">@identity</MudListItem>
-                }
-            </MudList>
-        </MudPaper>
-    </MudItem>
-
-    <MudItem Class="d-flex" xs="12" md="3">
-        <MudPaper Class="p-5" Style="width: 100%;">
-            <FromAddressesTable FromAddresses="FromAddresses" OnDelete="DeleteFromAddress" />
-        </MudPaper>
-    </MudItem>
+<MudGrid Spacing="6" Style="min-height: 95vh; width: 100%; padding: 1rem;">
+    <!-- Left Column -->
     <MudItem xs="12" md="6">
-        <MudPaper Style="padding: 1rem;">Html editor for template goes here</MudPaper>
+        <MudGrid Spacing="3" Class="d-flex flex-column">
+            <!-- Verified Identities -->
+            <MudItem>
+                <MudPaper Style="width: 100%; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <MudText Typo="Typo.h6">Verified Identities</MudText>
+                        <div>
+                            <MudTooltip Style="width: 220px; text-wrap: wrap;" Text="These are the verified identities pulled from your configured email provider's API. This list may not be complete or accurate.">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                    <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/>
+                                </svg>
+                            </MudTooltip>
+                        </div>
+                    </div>
+                    <MudList T="string">
+                        @foreach (var identity in VerifiedIdentities)
+                        {
+                        <MudListItem @onclick="() => AppendToForm(identity)">@identity</MudListItem>
+                        }
+                    </MudList>
+                </MudPaper>
+            </MudItem>
+            <!-- Add From Address Form -->
+            <MudItem>
+                <MudPaper Class="mud-width-full" Style="padding: 1rem;">
+                    <AddFromAddressForm @ref="addFromAddressForm" VerifiedIdentities="VerifiedIdentities" OnFromAddressAdded="AddFromAddressAsync"/>
+                </MudPaper>
+            </MudItem>
+            <!-- From Addresses Table -->
+            <MudItem>
+                <MudPaper Class="p-5" Style="width: 100%;">
+                    <FromAddressesTable FromAddresses="FromAddresses" OnDelete="DeleteFromAddress"/>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudItem>
+
+    <!-- Right Column -->
+    <MudItem xs="12" md="6">
+        <MudPaper Style="padding: 1rem; width: 100%; height: 100%;">
+            Html editor for template goes here
+        </MudPaper>
     </MudItem>
 </MudGrid>
 
@@ -66,9 +78,9 @@
         FromAddresses = await FromAddressService.FetchAllAsync();
     }
 
-    private async void AddFromAddressAsync(string email)
+    private async void AddFromAddressAsync(CreateFromAddressDetails details)
     {
-        var result = await FromAddressService.AddAsync(email);
+        var result = await FromAddressService.AddAsync(details);
 
         if (result == null)
         {

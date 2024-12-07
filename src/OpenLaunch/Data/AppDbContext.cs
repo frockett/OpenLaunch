@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using OpenLaunch.Components.Account.Pages.Manage;
 using OpenLaunch.Models;
 
 namespace OpenLaunch.Data;
@@ -13,6 +14,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     
     public DbSet<WaitlistSignup> WaitlistSignups { get; set; }
     public DbSet<FromAddress> FromAddresses { get; set; }
+    public DbSet<EmailTemplate> EmailTemplates { get; set; }
     
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -19,11 +19,11 @@ public class FromAddressService
         return await _dbContext.FromAddresses.ToListAsync();
     }
 
-    public async Task<FromAddress?> AddAsync(string address)
+    public async Task<FromAddress?> AddAsync(CreateFromAddressDetails details)
     {
         try
         {
-            var newAddress = new FromAddress { Address = address };
+            var newAddress = new FromAddress { Address = details.FromAddress, DisplayName = details.DisplayName };
             var result = await _dbContext.FromAddresses.AddAsync(newAddress);
             await _dbContext.SaveChangesAsync();
             return result.Entity;

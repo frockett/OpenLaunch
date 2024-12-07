@@ -33,7 +33,7 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft.AspNetCore.Mvc", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.AspNetCore.Routing", LogEventLevel.Warning)
     .Enrich.FromLogContext()
-    .WriteTo.Console(new RenderedCompactJsonFormatter()) //Switch to RenderedCompactJsonFormatter for human-readable
+    .WriteTo.Console(new RenderedCompactJsonFormatter())
     .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
@@ -70,6 +70,7 @@ builder.Services.AddScoped<IEmailService, AWSEmailService>();
 builder.Services.AddScoped<AWSDataFetching>();
 builder.Services.AddScoped<AdminUserSeeder>();
 builder.Services.AddScoped<FromAddressService>();
+builder.Services.AddScoped<EmailTemplateService>();
 
 // Unsubscribe Endpoint Services
 builder.Services.AddScoped<UnsubscribeHandler>();
