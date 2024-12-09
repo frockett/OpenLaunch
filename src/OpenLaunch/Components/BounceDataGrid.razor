@@ -1,0 +1,64 @@
+@using Microsoft.AspNetCore.Mvc.Formatters.Xml
+@using OpenLaunch.Models
+@using OpenLaunch.Services
+@using Color = System.Drawing.Color
+@using Size = MudBlazor.Size
+@using Variant = MudBlazor.Variant
+@inject BounceService BounceService
+
+<MudTable Items="bounces" FixedHeader="true" Hover="true" Height="500px" Dense="true">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Bounce Reports</MudText>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Email</MudTh>
+        <MudTh>Code</MudTh>
+        <MudTh>Bounced Time</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Email">@context.BouncedSignup?.Email</MudTd>
+        <MudTd DataLabel="Diagnostic Code">@context.DiagnosticCode</MudTd>
+        <MudTd DataLabel="Bounced Time">@context.BouncedTime.ToString("g")</MudTd>
+        <MudTd Style="display: flex; flex-direction: column; gap: 0.4rem; align-items: center; justify-content: center;" DataLabel="Actions">
+            <MudTooltip Text="ONLY do this if you're very sure. This will allow you to see the bounced subscriber on the emails page again, but they will stay unsubscribed.">
+                <MudButton Size="Size.Small" OnClick="@(() => UnquarantineBounced(context))" Variant="Variant.Filled" Color="MudBlazor.Color.Warning">Unquarantine</MudButton>
+            </MudTooltip>
+            <MudButton Size="Size.Small" OnClick="@(() => DeleteBounced(context))" Variant="Variant.Filled" Color="MudBlazor.Color.Default">Delete Subscriber</MudButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<Bounces> bounces = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchDataAsync();
+    }
+
+    private async Task FetchDataAsync()
+    {
+        bounces = await BounceService.GetAllAsync();
+    }
+
+    private async Task UnquarantineBounced(Bounces bounce)
+    {
+        if (bounce.BouncedSignup != null)
+        {
+            await BounceService.UnquarantineAsync(bounce);
+        }
+
+        await FetchDataAsync();
+    }
+
+    private async Task DeleteBounced(Bounces bounce)
+    {
+        if (bounce.BouncedSignup != null)
+        {
+            await BounceService.DeleteAssociatedSignupAsync(bounce);
+        }
+
+        await FetchDataAsync();
+    }
+}

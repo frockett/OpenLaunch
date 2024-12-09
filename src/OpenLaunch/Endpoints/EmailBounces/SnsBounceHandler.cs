@@ -22,8 +22,6 @@ public class SnsBounceHandler
     {
         try
         {
-
-
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -43,7 +41,7 @@ public class SnsBounceHandler
                             "Bounce notification received for email: {EmailAddress}, bounce type: {BounceType}, reason: {DiagnosticCode}",
                             recipient.EmailAddress, bounceMessage.Bounce.BounceType, recipient.DiagnosticCode);
 
-                        await UnsubscribeBouncedEmail(recipient.EmailAddress);
+                        await UnsubscribeBouncedEmail(recipient);
                     }
                 }
                 else
@@ -62,16 +60,16 @@ public class SnsBounceHandler
         }
     }
 
-    public async Task UnsubscribeBouncedEmail(string email)
+    public async Task UnsubscribeBouncedEmail(BouncedRecipient recipient)
     {
         try
         {
             var bouncedUser = await _context.WaitlistSignups
-                .FirstOrDefaultAsync(u => u.Email == email);
+                .FirstOrDefaultAsync(u => u.Email == recipient.EmailAddress);
 
             if (bouncedUser == null)
             {
-                Log.Warning("Bounce notification received for nonexistent user {email}", email);
+                Log.Warning("Bounce notification received for nonexistent user {email}", recipient.EmailAddress);
                 return;
             }
 
@@ -82,15 +80,16 @@ public class SnsBounceHandler
             {
                 BouncedSignup = bouncedUser,
                 BouncedTime = DateTime.UtcNow,
+                DiagnosticCode = recipient.DiagnosticCode,
             };
 
             await _context.Bounces.AddAsync(bounceRecord);
             await _context.SaveChangesAsync();
-            Log.Information("Bounced user with email {email} has been successfully unsubscribed, flagged, and the bounce has been recorded.", email);
+            Log.Information("Bounced user with email {email} has been successfully unsubscribed, flagged, and the bounce has been recorded.", recipient.EmailAddress);
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "An error occurred while logging and unsubscribing bounced email {email}", email);
+            Log.Error(ex, "An error occurred while logging and unsubscribing bounced email {email}", recipient.EmailAddress);
         }
     }
 }

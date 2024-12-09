@@ -67,16 +67,12 @@
             }
         };
         
-        Console.WriteLine($"THEME IS: {options.Theme.Mode.ToString()}");
-
         DarkModeService.OnChange += UpdateChartTheme;
     }
     
     private async Task UpdateChartTheme()
     {
-        Console.WriteLine("THEME CHANGED!!!");
         options.Theme.Mode = DarkModeService.IsDarkMode ? Mode.Dark : Mode.Light;
-        Console.WriteLine($"THEME IS: {options.Theme.Mode.ToString()}");
         await chart.RenderAsync();
     }
     

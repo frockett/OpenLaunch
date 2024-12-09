@@ -18,34 +18,32 @@
     </MudSelect>
     </div>
     <MudGrid>
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
-                <div style="display: flex; flex-direction: column; gap: 3rem; justify-content: center; align-items: center;">
-                    <h3>Signups Last 7 days</h3>
-                    <div style="font-size: 3rem; font-weight: bold;">@newSignups</div>
-                </div>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
-                <div style="display: flex; flex-direction: column; gap: 3rem; justify-content: center; align-items: center;">
-                    <h3>Percent of users active</h3>
-                    <div style="font-size: 3rem; font-weight: bold;">@mauPercent %</div>
-                </div>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="12" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
-                <div style="display: flex; flex-direction: column; gap: 3rem; justify-content: center; align-items: center;">
-                    <h3>Total Waitlist Signups</h3>
+        <MudItem xs="12" md="3">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 100%;">
+                <div style="display: flex; flex-direction: column; gap: 3rem; height: 100%; justify-content: center; align-items: center;">
+                    <h2>Total Waitlist Signups</h2>
                     <div style="display: flex; gap: 0.75rem; align-items: baseline; justify-content: center">
                         <div style="font-size: 3rem; font-weight: bold;">@totalWaitlist</div>
-                        <div style="font-size: 0.75rem; font-weight: 500; color: green">(Prev 7 days) +@sevenDayWaitlistGrowth</div>
+                        <div style="font-size: 1rem; font-weight: 500; color: green">(Prev @_selectedRange days) +@waitlistGrowth</div>
                     </div>
                 </div>
             </MudPaper>
         </MudItem>
-        <MudItem xs="12" sm="12">
+        <MudItem xs="12" sm="9">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 350px;">
+                @if (showChart)
+                {
+                <WaitlistOverTime StartDate="@startDate" EndDate="@endDate"></WaitlistOverTime>
+                }
+                else
+                {
+                <div class="flex-grow-1" style="display: flex; width: 100%; height: 100%; justify-content: center; align-items: center;">
+                    <text>Loading data...</text>xs
+                </div>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem sm="12" md="7">
             <MudPaper Elevation="2" Class="pa-4" Style="height: 350px;">
                 @if (showChart)
                 {
@@ -54,43 +52,20 @@
                 else
                 {
                     <div class="flex-grow-1" style="display: flex; width: 100%; height: 100%; justify-content: center; align-items: center;">
-                    <text>Loading data...</text>
+                        <text>Loading data...</text>
                     </div>
                 }
             </MudPaper>
         </MudItem>
-        <MudItem xs="12" sm="12">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 350px;">
-                @if (showChart)
-                {
-                    <WaitlistOverTime StartDate="@startDate" EndDate="@endDate"></WaitlistOverTime>
-                }
-                else
-                {
-                <div class="flex-grow-1" style="display: flex; width: 100%; height: 100%; justify-content: center; align-items: center;">
-                    <text>Loading data...</text>
-                </div>
-                }
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="6">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 100%"></MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="12" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
+        <MudItem sm="12" md="5" Style="margin-bottom: 2rem;">
+            <BounceDataGrid></BounceDataGrid>
         </MudItem>
     </MudGrid>
 </MudContainer>
 
 @code {
     private Dictionary<string, List<MetricLineChart.MetricResult>> emailMetricsData;
-    private int _selectedRange = 7; // Default to 7 days
+    private int _selectedRange = 7;
 
     private int SelectedRange
     {
@@ -100,7 +75,7 @@
             if (_selectedRange != value)
             {
                 _selectedRange = value;
-                _ = UpdateDateRangeAsync(); // Trigger chart update
+                _ = UpdateDateRangeAsync();
             }
         }
     }
@@ -114,22 +89,13 @@
     private int totalUsers;
 
     private int totalWaitlist;
-    private int sevenDayWaitlistGrowth;
+    private int waitlistGrowth;
 
     private int emailOpens;
 
     protected override async Task OnInitializedAsync()
     {
         await UpdateDateRangeAsync();
-        
-        using var scope = ServiceProvider.CreateScope();
-        var scopedContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        totalWaitlist = await scopedContext.WaitlistSignups
-            .CountAsync();
-
-        sevenDayWaitlistGrowth = await scopedContext.WaitlistSignups
-            .CountAsync(s => s.CreatedAt > DateTime.UtcNow.AddDays(-7));
     }
     
     private async Task UpdateDateRangeAsync()
@@ -141,11 +107,25 @@
             .Select(offset => startDate.AddDays(offset))
             .ToList();
 
+        await GetWaitlistStats(SelectedRange);
+        
         showChart = false;
         await PrepareMetricDataAsync(dateRange);
         await Task.Delay(1);
         showChart = true;
         StateHasChanged();
+    }
+
+    private async Task GetWaitlistStats(int range)
+    {
+        using var scope = ServiceProvider.CreateScope();
+        var scopedContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        
+        waitlistGrowth = await scopedContext.WaitlistSignups
+            .CountAsync(s => s.CreatedAt > DateTime.UtcNow.AddDays(-range));
+        
+        totalWaitlist = await scopedContext.WaitlistSignups
+            .CountAsync();
     }
 
     private async Task PrepareMetricDataAsync(List<DateTime> dateRange)

@@ -9,7 +9,7 @@
 
 <MudGrid Style="padding: 1rem 1rem;" Spacing="2">
     <MudItem xs="12" sm="4">
-        <MudTextField Label="Template Name" @bind-Value="TemplateName" Required="true" RequiredError="Name is required"/>
+        <MudTextField Label="Template Name" @bind-Value="TemplateName" Immediate="true" Required="true" RequiredError="Name is required"/>
     </MudItem>
     <MudItem xs="12" sm="8">
     <MudGrid Spacing="2">
@@ -57,11 +57,23 @@
 
 <!-- Save and Reset Buttons -->
 <div style="display:flex; width: 100%; padding: 1rem 0; justify-content: end; gap:8px;">
-    <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveTemplate">Save</MudButton>
+    @if (string.IsNullOrWhiteSpace(TemplateName))
+    {
+        <MudTooltip Color="Color.Warning" Text="Template must have a name!">
+            <MudButton Disabled="true" Color="Color.Primary" Variant="Variant.Filled">Save</MudButton>
+        </MudTooltip>
+    }
+    else
+    {
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveTemplate">Save</MudButton>
+    }
     <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="ResetFields">Reset</MudButton>
 </div>
 
 <MudTable Items="templates">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Your Templates</MudText>
+    </ToolBarContent>
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>Actions</MudTh>

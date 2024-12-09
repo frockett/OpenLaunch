@@ -76,6 +76,7 @@ builder.Services.AddScoped<EmailTemplateService>();
 builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<ApiKeyFilter>();
 builder.Services.AddSingleton<DarkModeService>();
+builder.Services.AddScoped<BounceService>();
 
 
 // Unsubscribe Endpoint Services
