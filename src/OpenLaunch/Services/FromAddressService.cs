@@ -19,6 +19,13 @@ public class FromAddressService
         return await _dbContext.FromAddresses.ToListAsync();
     }
 
+    public async Task<bool> AlreadyExists(CreateFromAddressDetails details)
+    {
+        return await _dbContext.FromAddresses
+            .Select(x => x.Address == details.FromAddress && x.DisplayName == details.DisplayName)
+            .AnyAsync();
+    }
+
     public async Task<FromAddress?> AddAsync(CreateFromAddressDetails details)
     {
         try

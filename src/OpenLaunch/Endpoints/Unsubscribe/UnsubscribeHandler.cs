@@ -56,13 +56,7 @@ public class UnsubscribeHandler
         
         return new OkObjectResult(new { message = "User successfully unsubscribed" });
     }
-
-    // public async Task<string> GenerateUnsubscribeLink(string email)
-    // {
-    //     var token = _tokenService.GenerateToken(email);
-    //     var baseUrl = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host}";
-    //     return $"{baseUrl}/api/unsubscribe?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
-    // }
+    
 
     private async Task<bool> ValidateToken(UnsubscribeRequest request)
     {

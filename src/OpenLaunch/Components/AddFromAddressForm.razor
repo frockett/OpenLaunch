@@ -68,7 +68,7 @@
             var details = new CreateFromAddressDetails(NewFromAddress, NewDisplayName);
             await OnFromAddressAdded.InvokeAsync(details);
             NewDisplayName = string.Empty;
-            NewFromAddress = string.Empty; // Reset the form
+            NewFromAddress = string.Empty;
         }
     }
     

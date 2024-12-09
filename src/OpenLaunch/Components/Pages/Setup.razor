@@ -80,6 +80,13 @@
 
     private async void AddFromAddressAsync(CreateFromAddressDetails details)
     {
+        // Prevent duplicates
+        if (await FromAddressService.AlreadyExists(details))
+        {
+            Snackbar.Add("This from address and display name pair already exists! You can't add duplicates.", Severity.Warning);
+            return;
+        }
+        
         var result = await FromAddressService.AddAsync(details);
 
         if (result == null)

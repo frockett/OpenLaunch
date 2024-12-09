@@ -42,10 +42,12 @@ public class EmailTemplateService
 
             if (templateToUpdate == null)
                 return null;
-
-            var result = _context.EmailTemplates.Update(emailTemplate);
+            
+            templateToUpdate.Name = emailTemplate.Name;
+            templateToUpdate.HtmlContent = emailTemplate.HtmlContent;
+            
             await _context.SaveChangesAsync();
-            return result.Entity;
+            return templateToUpdate;
         }
         catch (Exception ex)
         {

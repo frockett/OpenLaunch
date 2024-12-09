@@ -1,21 +1,181 @@
+@using OpenLaunch.Models
+@using OpenLaunch.Services
+@using Color = MudBlazor.Color
+@using Size = MudBlazor.Size
+@using Variant = MudBlazor.Variant
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
+@inject EmailTemplateService EmailTemplateService
 
-<RadzenHtmlEditor class="custom-editor" @ref="htmlEditor" @bind-Value=@htmlValue style="flex: 1; min-height: 500px; width: 100%;" 
+<MudGrid Style="padding: 1rem 1rem;" Spacing="2">
+    <MudItem xs="12" sm="4">
+        <MudTextField Label="Template Name" @bind-Value="TemplateName" Required="true" RequiredError="Name is required"/>
+    </MudItem>
+    <MudItem xs="12" sm="8">
+    <MudGrid Spacing="2">
+        <MudItem sm="3">
+            <MudSelect Label="Padding X" @bind-Value="PaddingX">
+                <MudSelectItem Value=@("12px")>12px</MudSelectItem>
+                <MudSelectItem Value=@("24px")>24px</MudSelectItem>
+                <MudSelectItem Value=@("36px")>36px</MudSelectItem>
+                <MudSelectItem Value=@("48px")>48px</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem sm="3">
+            <MudSelect Label="Padding Y" @bind-Value="PaddingY">
+                <MudSelectItem Value=@("12px")>12px</MudSelectItem>
+                <MudSelectItem Value=@("24px")>24px</MudSelectItem>
+                <MudSelectItem Value=@("36px")>36px</MudSelectItem>
+                <MudSelectItem Value=@("48px")>48px</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem sm="3">
+            <MudSelect Label="Min Width" @bind-Value="MinWidth">
+                <MudSelectItem Value=@("320px")>320px</MudSelectItem>
+                <MudSelectItem Value=@("480px")>480px</MudSelectItem>
+                <MudSelectItem Value=@("600px")>600px</MudSelectItem>
+                <MudSelectItem Value=@("800px")>800px</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem sm="3">
+            <MudSelect Label="Max Width" @bind-Value="MaxWidth">
+                <MudSelectItem Value=@("600px")>600px</MudSelectItem>
+                <MudSelectItem Value=@("800px")>800px</MudSelectItem>
+                <MudSelectItem Value=@("1000px")>1000px</MudSelectItem>
+                <MudSelectItem Value=@("1200px")>1200px</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+    </MudItem>
+</MudGrid>
+
+<RadzenHtmlEditor @ref="htmlEditor" @bind-Value=@HtmlValue style="flex: 1; height: 500px; width: 100%;" 
                   UploadHeaders="@(new Dictionary<string, string> { {"RequestVerificationToken", Antiforgery.GetAndStoreTokens(HttpContextAccessor.HttpContext).RequestToken }
                                  })"
                   UploadUrl="api/upload-image">
 </RadzenHtmlEditor>
 
-<style>
-    .custom-editor .rz-html-editor * {
-        color: inherit;
-        background-color: lime;
-    }
-</style>
+<!-- Save and Reset Buttons -->
+<div style="display:flex; width: 100%; padding: 1rem 0; justify-content: end; gap:8px;">
+    <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveTemplate">Save</MudButton>
+    <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="ResetFields">Reset</MudButton>
+</div>
+
+<MudTable Items="templates">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="tmpl">
+        <MudTd>@tmpl.Name</MudTd>
+        <MudTd>
+            <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" OnClick="@(() => EditTemplate(tmpl))">Edit</MudButton>
+            <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteTemplate(tmpl.Id))">Delete</MudButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
 
 @code {
     private RadzenHtmlEditor htmlEditor;
+    private string PaddingX { get; set; } = "36px";
+    private string PaddingY { get; set; } = "24px";
+    private string MinWidth { get; set; } = "320px";
+    private string MaxWidth { get; set; } = "600px";
 
-    private string htmlValue = "<div></div>";
+    private string userContent = @"
+<h2>You can write your template here and save it.</h2>
+<div><br></div>
+<div>Use the list below to view your saved templates, edit, or delete them.</div>
+<div><br></div>
+<div>You can use a template to save time by doing things like adding your logo, email signature, and more</div>
+<div><br></div>
+<div>Beware that the editor currently does not support tables. Also, please do not remove the outermost parent div. It will break the formatting.</div>";
+
+    private string HtmlValue
+    {
+        get => $@"<div style=""padding: {PaddingY} {PaddingX}; min-width: {MinWidth}; max-width: {MaxWidth}; margin: 0 auto;"">{userContent}</div>";
+        set
+        {
+            // For simplicity, assume user doesn't remove outer div:
+            var start = value.IndexOf(">") + 1;
+            var end = value.LastIndexOf("</div>");
+            if (start > 0 && end > start)
+            {
+                userContent = value.Substring(start, end - start);
+            }
+            else
+            {
+                // If something unexpected, just store the entire content
+                userContent = value;
+            }
+        }
+    }
+
+    private List<EmailTemplate?> templates = new();
+    private int? editingTemplateId = null;
+    private string TemplateName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        templates = await EmailTemplateService.GetAllAsync();
+    }
+    
+    private void ResetFields()
+    {
+        editingTemplateId = null;
+        TemplateName = "";
+        PaddingX = "36px";
+        PaddingY = "24px";
+        MinWidth = "320px";
+        MaxWidth = "600px";
+        userContent = @"
+<h2>You can write your template here and save it.</h2>
+<div><br></div>
+<div>Use the list below to view your saved templates, edit, or delete them.</div>
+<div><br></div>
+<div>You can use a template to save time by doing things like adding your logo, email signature, and more</div>
+<div><br></div>
+<div>Beware that the editor currently does not support tables. Also, please do not remove the outermost parent div. It will break the formatting.</div>";
+    }
+
+    private async void SaveTemplate()
+    {
+        if (string.IsNullOrWhiteSpace(TemplateName))
+        {
+            // Show error
+            return;
+        }
+
+        var template = new EmailTemplate
+        {
+            Id = editingTemplateId.GetValueOrDefault(),
+            Name = TemplateName,
+            HtmlContent = HtmlValue,
+        };
+
+        if (editingTemplateId.HasValue)
+        {
+            await EmailTemplateService.UpdateAsync(template);
+        }
+        else
+        {
+            await EmailTemplateService.AddAsync(template);
+        }
+
+        templates = await EmailTemplateService.GetAllAsync();
+        ResetFields();
+    }
+
+    private void EditTemplate(EmailTemplate tmpl)
+    {
+        editingTemplateId = tmpl.Id;
+        TemplateName = tmpl.Name;
+        HtmlValue = tmpl.HtmlContent;
+    }
+
+    private async void DeleteTemplate(int id)
+    {
+        await EmailTemplateService.DeleteAsync(id);
+        templates = await EmailTemplateService.GetAllAsync();
+    }
 }

@@ -200,6 +200,7 @@
         var scopedContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         Elements = await scopedContext.WaitlistSignups
+            .Where(x => x.HasBounced == false)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync();
 

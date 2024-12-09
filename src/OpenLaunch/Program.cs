@@ -15,6 +15,7 @@ using OpenLaunch.Features.Unsubscribe.Services;
 using OpenLaunch.Features.Upload;
 using OpenLaunch.Interfaces;
 using OpenLaunch.Data;
+using OpenLaunch.Endpoints.EmailBounces;
 using OpenLaunch.Features.Subscribe;
 using OpenLaunch.Filters;
 using OpenLaunch.Models;
@@ -88,6 +89,9 @@ builder.Services.AddScoped<UploadHandler>();
 // Subscribe Endpoint Services
 builder.Services.AddScoped<SubscribeHandler>();
 
+// Bounce Endpoint Services
+builder.Services.AddScoped<SnsBounceHandler>();
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
@@ -148,9 +152,10 @@ app.MapRazorComponents<App>()
 app.MapAdditionalIdentityEndpoints();
 
 // Map Endpoints in /Endpoints
-app.MapUnsubscribeEndpoints();
+UnsubscribeEndpoint.MapUnsubscribeEndpoints(app);
 app.MapUploadEndpoints();
 app.MapSubscribeEndpoints();
+app.MapBounceEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {
