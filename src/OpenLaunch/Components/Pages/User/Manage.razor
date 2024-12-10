@@ -1,6 +1,235 @@
-@page "User/Profile"
+@page "/User/Manage"
 
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Mvc.Formatters
+@using OpenLaunch.Components.Account
+@using OpenLaunch.Components.Account.Pages.Manage
+@using OpenLaunch.Models
+@using Serilog
+@using ButtonType = MudBlazor.ButtonType
+@using Color = MudBlazor.Color
+@using Size = MudBlazor.Size
+@using Variant = MudBlazor.Variant
+
+
+@inject UserManager<AppUser> UserManager
+@inject SignInManager<AppUser> SignInManager
+@inject IdentityRedirectManager RedirectManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="mt-5">
+    <MudPaper Class="p-6">
+        <MudTabs>
+            <MudTabPanel Text="Change Username">
+                <EditForm OnValidSubmit="SubmitUsernameForm" Model="Username">
+                    <DataAnnotationsValidator/>
+                    <MudStack Spacing="6">
+                        <div style="display: flex; flex-direction: column; gap: 1rem; padding: 1rem 2rem;">
+                            <MudText class="p-3" Typo="Typo.h6">Current username: <b>@currentUserName</b></MudText>
+                            <MudTextField
+                                @bind-Value="Username.NewUsername"
+                                For="@(() => Username.NewUsername)"
+                                Label="New Username"
+                                Required="true"
+                                FullWidth="true"
+                                Class="p-3"/>
+                            <MudButton
+                                ButtonType="ButtonType.Submit"
+                                Variant="Variant.Filled"
+                                Color="Color.Primary"
+                                FullWidth="true"
+                                Disabled="isUpdating"
+                                Class="p-3">
+                                @if (isUpdating)
+                                {
+                                    <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Inherit"/>
+                                    <span style="margin-left: 8px;">Updating Username...</span>
+                                }
+                                else
+                                {
+                                    <span>Change Username</span>
+                                }
+                            </MudButton>
+                        </div>
+                    </MudStack>
+                </EditForm>
+            </MudTabPanel>
+            <MudTabPanel Text="Change Password">
+                <EditForm OnValidSubmit="SubmitPasswordForm" Model="@Input">
+                    <DataAnnotationsValidator/>
+                    <MudStack Spacing="6">
+                        <div style="display: flex; flex-direction: column; gap: 1rem; padding: 1rem 2rem;">
+                            <MudTextField 
+                                T="string"
+                                @bind-Value="Input.OldPassword"
+                                For="@(() => Input.OldPassword)"
+                                Label="Current Password"
+                                InputType="InputType.Text"
+                                Required="true"
+                                FullWidth="true"
+                                Class="p-3"/>
+                            <MudTextField T="string"
+                                          @bind-Value="Input.NewPassword"
+                                          For="@(() => Input.NewPassword)"
+                                Label="New Password"
+                                InputType="InputType.Text"
+                                Required="true"
+                                FullWidth="true"
+                                Class="p-3"/>
+                            <MudTextField 
+                                T="string"
+                                @bind-Value="Input.ConfirmPassword"
+                                For="@(() => Input.ConfirmPassword)"
+                                Label="Confirm New Password"
+                                InputType="InputType.Text"
+                                Required="true"
+                                FullWidth="true"
+                                Class="p-3"/>
+
+                            <MudButton
+                                Variant="Variant.Filled"
+                                ButtonType="ButtonType.Submit"
+                                Color="Color.Primary"
+                                FullWidth="true"
+                                Disabled="isUpdating"
+                                Class="p-3">
+                                @if (isUpdating)
+                                {
+                                    <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Inherit"/>
+                                    <span style="margin-left: 8px;">Updating Password...</span>
+                                }
+                                else
+                                {
+                                    <span>Change Password</span>
+                                }
+                            </MudButton>
+                        </div>
+                    </MudStack>
+                </EditForm>
+            </MudTabPanel>
+        </MudTabs>
+    </MudPaper>
+</MudContainer>
 
 @code {
+    private ClaimsPrincipal? User;
+    private string? currentUserName;
+    private string? userId;
+    private InputModel Input { get; set; } = new();
+    private UsernameModel Username { get; set; } = new();
+
+    private bool isUpdating = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        User = authState.User;
+        currentUserName = User.Identity?.Name;
+        Console.WriteLine($"CURRENT USERNAME: {currentUserName}");
+        userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
+    }
     
+    private async Task SubmitUsernameForm()
+    {
+        if (isUpdating)
+            return;
+        
+        isUpdating = true;
+
+
+        var user = await UserManager.GetUserAsync(User);
+        if (user != null)
+        {
+            user.UserName = Username.NewUsername;
+            var result = await UserManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                RefreshUserAsync(user);
+                Log.Information("User changed their username successfully.");
+                Snackbar.Add($"Username changed successfully to {user.UserName}!", Severity.Success);
+            }
+            else
+            {
+                Log.Warning(result.Errors.ToString(), "Could not update username.");
+                Snackbar.Add("Something went wrong! Check your logs for more details.", Severity.Warning);
+            }
+        }   
+    
+
+        isUpdating = false;
+    }
+
+    private async Task SubmitPasswordForm()
+    {
+        if (isUpdating)
+            return;
+        
+        isUpdating = true;
+        StateHasChanged();
+
+            var user = await UserManager.GetUserAsync(User);
+            if (user != null)
+            {
+                var result = await UserManager.ChangePasswordAsync(user, Input.OldPassword, Input.NewPassword);
+                if (result.Succeeded)
+                {
+                    await RefreshUserAsync(user);
+                    await RefreshForms();
+                    Snackbar.Add("Your password has been changed.", Severity.Success);
+                    Log.Information("User changed their password successfully.");
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        Snackbar.Add(error.Description, Severity.Error);
+                    }
+                }
+                
+            }
+            
+        isUpdating = false;
+    } 
+    
+    private async Task RefreshUserAsync(AppUser user)
+    {
+        var updatedUser = await UserManager.FindByIdAsync(user.Id);
+        if (updatedUser != null)
+        {
+            currentUserName = updatedUser.UserName;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshForms()
+    {
+        Input.OldPassword = string.Empty;
+        Input.NewPassword = string.Empty;
+        Input.ConfirmPassword = string.Empty;
+
+        Username.NewUsername = string.Empty;
+    }
+
+    private class UsernameModel
+    {
+        [Required(ErrorMessage = "New username is required.")]
+        public string NewUsername { get; set; }
+    }
+
+    private class InputModel
+    {
+        [Required(ErrorMessage = "Current password is required.")]
+        public string OldPassword { get; set; }
+
+        [Required(ErrorMessage = "New password is required.")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "New password must be at least 6 characters long.")]
+        public string NewPassword { get; set; }
+
+        [Required(ErrorMessage = "Confirmation password is required.")]
+        [Compare(nameof(NewPassword), ErrorMessage = "The new password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; }
+    }
 }

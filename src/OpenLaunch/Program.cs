@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Amazon.Runtime;
@@ -26,7 +27,14 @@ using Serilog.Events;
 using Serilog.Formatting.Compact;
 using Serilog.Formatting.Json;
 
-DotEnv.Load();
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+
+if (environment != "Production")
+{
+    var options = new DotEnvOptions(envFilePaths: new[] { "../../.env" });
+    DotEnv.Load(options);
+
+}
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)

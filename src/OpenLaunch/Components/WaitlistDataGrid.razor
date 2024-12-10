@@ -70,11 +70,12 @@
     private List<string> _events = new();
 
     private bool _applyConsentFilter = true;
-    // custom sort by name length
+
     private Func<WaitlistSignup, object> _sortBy => x =>
     {
         return x.Email;
     };
+    
     // quick filter - filter globally across multiple columns with the same input
     private Func<WaitlistSignup, bool> _quickFilter => x =>
     {

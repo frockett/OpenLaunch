@@ -1,5 +1,6 @@
 @using MudBlazor
 @using OpenLaunch.Models
+@using Align = MudBlazor.Align
 @using Color = MudBlazor.Color
 @using Size = MudBlazor.Size
 
@@ -19,6 +20,11 @@
             <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDelete.InvokeAsync(context))">Delete</MudButton>
         </MudTd>
     </RowTemplate>
+    <NoRecordsContent>
+        <MudText Align="Align.Center" Class="px-4 py-1">
+            No from addresses found.
+        </MudText>
+    </NoRecordsContent>
 </MudTable>
 
 @code {
