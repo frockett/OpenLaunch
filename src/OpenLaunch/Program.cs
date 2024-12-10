@@ -51,25 +51,44 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 
-builder.Services.AddScoped<AmazonSimpleEmailServiceV2Client>(sp =>
+var serviceType = builder.Configuration["USE_SERVICE"]?.ToUpper() ?? "MOCK";
+
+Log.Information("Service type {serviceType} detected.", serviceType);
+
+switch (serviceType)
 {
-    var accessKey = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID");
-    var secretKey = Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY");
-    var region = Environment.GetEnvironmentVariable("AWS_DEFAULT_REGION");
+    case "AWS":
+        builder.Services.AddScoped<AmazonSimpleEmailServiceV2Client>(sp =>
+        {
+            var accessKey = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID");
+            var secretKey = Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY");
+            var region = Environment.GetEnvironmentVariable("AWS_DEFAULT_REGION");
     
-    if (string.IsNullOrEmpty(accessKey) || string.IsNullOrEmpty(secretKey) || string.IsNullOrEmpty(region))
-    {
-        throw new InvalidOperationException("AWS credentials or region are not set in the environment variables.");
-    }
+            if (string.IsNullOrEmpty(accessKey) || string.IsNullOrEmpty(secretKey) || string.IsNullOrEmpty(region))
+            {
+                throw new InvalidOperationException("AWS credentials or region are not set in the environment variables.");
+            }
 
-    var awsCredentials = new Amazon.Runtime.BasicAWSCredentials(accessKey, secretKey);
-    var awsRegion = Amazon.RegionEndpoint.GetBySystemName(region);
+            var awsCredentials = new Amazon.Runtime.BasicAWSCredentials(accessKey, secretKey);
+            var awsRegion = Amazon.RegionEndpoint.GetBySystemName(region);
 
-    return new AmazonSimpleEmailServiceV2Client(awsCredentials, awsRegion);
-});
+            return new AmazonSimpleEmailServiceV2Client(awsCredentials, awsRegion);
+        });
+        builder.Services.AddScoped<IEmailService, AWSEmailService>();
+        builder.Services.AddScoped<IExternalDataFetching, AWSDataFetching>();
+        break;
+    
+    case "MOCK":
+        builder.Services.AddScoped<IEmailService, MockEmailService>();
+        builder.Services.AddScoped<IExternalDataFetching, MockDataFetching>();
+        break;
+    
+    default:
+        Log.Warning("Build failed due to unknown service type: {serviceType}", serviceType);
+        throw new InvalidOperationException($"Unsupported service type: {serviceType}");
+}
 
-builder.Services.AddScoped<IEmailService, AWSEmailService>();
-builder.Services.AddScoped<AWSDataFetching>();
+
 builder.Services.AddScoped<AdminUserSeeder>();
 builder.Services.AddScoped<FromAddressService>();
 builder.Services.AddScoped<EmailTemplateService>();
@@ -77,7 +96,6 @@ builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<ApiKeyFilter>();
 builder.Services.AddSingleton<DarkModeService>();
 builder.Services.AddScoped<BounceService>();
-
 
 // Unsubscribe Endpoint Services
 builder.Services.AddScoped<UnsubscribeHandler>();
@@ -195,7 +213,6 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     var adminSeeder = services.GetRequiredService<AdminUserSeeder>();
     
-    Log.Information("Seeding admin user");
     await adminSeeder.SeedAdminUserAsync();
 }
 

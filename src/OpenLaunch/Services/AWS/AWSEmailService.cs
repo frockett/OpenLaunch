@@ -29,11 +29,11 @@ public class AWSEmailService : IEmailService
         string? contactListName = null)
     {
         var result = new EmailSendResult();
-        
-        var random = new Random();
 
         foreach (var toEmailAddress in toEmailAddresses)
         {
+            // This is to help avoid issues with surpassing requests/second limits. Can make it a UI option later.
+            Thread.Sleep(100);
             
             var request = new SendEmailRequest
             {
@@ -103,21 +103,8 @@ public class AWSEmailService : IEmailService
             
             try
             {
-                // var response = await _sesClient.SendEmailAsync(request);
-
-                // simulate an async operation
-                await Task.Delay(100);
-
-                if (random.Next(2) == 0)
-                {
-                    result.SuccessfullySentEmails.Add(toEmailAddress);
-                }
-                else
-                {
-                    result.FailedEmails.Add((toEmailAddress, "Simulated Failure: Test error message"));
-                }
-                
-                // result.SuccessfullySentEmails.Add(toEmailAddress);
+                var response = await _sesClient.SendEmailAsync(request);
+                result.SuccessfullySentEmails.Add(toEmailAddress);
             }
             catch (AccountSuspendedException ex)
             {

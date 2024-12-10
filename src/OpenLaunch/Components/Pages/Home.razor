@@ -5,7 +5,7 @@
 @using OpenLaunch.Data
 @using Microsoft.EntityFrameworkCore
 @inject IServiceProvider ServiceProvider
-@inject AWSDataFetching AwsDataFetching
+@inject IExternalDataFetching DataFetching
 
 <PageTitle>Home</PageTitle>
 
@@ -130,10 +130,10 @@
 
     private async Task PrepareMetricDataAsync(List<DateTime> dateRange)
     {
-        var awsData = await AwsDataFetching.FetchBatchMetricsAsync(startDate, endDate);
+        var metricDataResponse = await DataFetching.FetchBatchMetricsAsync(startDate, endDate);
         
         emailMetricsData = new Dictionary<string, List<MetricLineChart.MetricResult>>(
-            awsData.Results
+            metricDataResponse.Results
             .ToDictionary(
                 result => result.Id,
                 result =>
@@ -141,7 +141,7 @@
                     var metricData = result.Timestamps.Zip(result.Values, (timestamp, value) => new MetricLineChart.MetricResult
                     {
                         Timestamp = timestamp,
-                        Value = value
+                        Value = (long)value,
                     }).ToList();
                     
                     return dateRange.Select(date => metricData.FirstOrDefault(md => md.Timestamp.Date == date) 

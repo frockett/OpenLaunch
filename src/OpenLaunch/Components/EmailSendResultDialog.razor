@@ -5,12 +5,12 @@
 <MudDialog>
     <DialogContent>
 
-        <MudText Typo="Typo.body1" Class="mb-4">Total Emails Sent Successfully: @Result.SuccessfullySentEmails.Count</MudText>
+        <MudText Typo="Typo.body1" Class="mb-4">Total Emails Accepted Successfully: @Result.SuccessfullySentEmails.Count</MudText>
 
         @if (Result.SuccessfullySentEmails.Any())
         {
             <MudExpansionPanels>
-                <MudExpansionPanel Text="View Successful Emails">
+                <MudExpansionPanel Text="View Accepted Emails">
                     <MudTable T="string" Items="@Result.SuccessfullySentEmails" Dense="true" Bordered="true" Hover="true">
                         <HeaderContent>
                             <MudTh>Email</MudTh>

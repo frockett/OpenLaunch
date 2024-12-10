@@ -6,8 +6,9 @@
 @using OpenLaunch.Models
 @using OpenLaunch.Services
 @using Serilog
+@using VerificationStatus = OpenLaunch.Interfaces.VerificationStatus
 
-@inject AWSDataFetching dataFetching
+@inject IExternalDataFetching dataFetching
 @inject IServiceProvider ServiceProvider
 @inject ISnackbar Snackbar
 @inject FromAddressService FromAddressService
@@ -71,7 +72,7 @@
         var list = await dataFetching.ListIdentitiesAsync();
 
         VerifiedIdentities = list
-            .Where(x => x.SendingEnabled && x.VerificationStatus == VerificationStatus.SUCCESS)
+            .Where(x => x.SendingEnabled && x.VerificationStatus == VerificationStatus.Success)
             .Select(x => x.IdentityName)
             .ToList();
 

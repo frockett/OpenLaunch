@@ -45,17 +45,44 @@
 
     [Parameter]
     public Dictionary<string, List<MetricResult>> SeriesData { get; set; }
+
+    private string serviceType = Environment.GetEnvironmentVariable("USE_SERVICE");
+
+    public Dictionary<string, string> FriendlyNames =>
+        serviceType switch
+        {
+            "AWS" => new Dictionary<string, string>
+            {
+                { "send_1", "Sent" },
+                { "opens_3", "Opened" },
+                { "delivery_2", "Delivered" },
+                { "clicks_4", "Clicked" },
+                { "transientBounce_5", "Transient Bounce" },
+                { "permanentBounce_6", "Permanent Bounce" },
+                { "complaints_7", "Complaints" }
+            },
+            "MOCK" => new Dictionary<string, string>
+            {
+                { "send_1", "Sent" },
+                { "delivery_2", "Delivered" },
+                { "opens_3", "Opened" },
+                { "bounce_4", "Bounce" },
+                { "block_5", "Blocked" },
+                { "spam_complaint_6", "Spam Complaints" }
+            },
+            _ => new Dictionary<string, string>()
+        };
     
-    public Dictionary<string, string> FriendlyNames { get; set; } = new()
-    {
-        { "send_1", "Sent" },
-        { "opens_3", "Opened" },
-        { "delivery_2", "Delivered" },
-        { "clicks_4", "Clicked" },
-        { "transientBounce_5", "Transient Bounce" },
-        { "permanentBounce_6", "Permanent Bounce" },
-        { "complaints_7", "Complaints" }
-    };
+    // public Dictionary<string, string> FriendlyNames { get; set; } = new()
+    // {
+    //     { "send_1", "Sent" },
+    //     { "opens_3", "Opened" },
+    //     { "delivery_2", "Delivered" },
+    //     { "clicks_4", "Clicked" },
+    //     { "transientBounce_5", "Transient Bounce" },
+    //     { "permanentBounce_6", "Permanent Bounce" },
+    //     { "complaints_7", "Complaints" }
+    // };
     
     protected override void OnInitialized()
     {
