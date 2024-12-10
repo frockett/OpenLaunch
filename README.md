@@ -26,7 +26,7 @@ It currently only supports AWS SES, but more integrations are welcome.
 For deploying OpenLaunch in production, ensure you have the following installed on your server:
 
 - **Docker**
-- **Docker Compose:** Typically included with Docker Desktop or install separately if needed.
+- **Docker Compose:** 
 - **Git** 
 
 *Note: The .NET 9 SDK is **not** required for deploying with Docker, but is necessary for development.*
