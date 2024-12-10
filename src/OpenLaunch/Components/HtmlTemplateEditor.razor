@@ -7,9 +7,19 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject EmailTemplateService EmailTemplateService
 
-<MudGrid Style="padding: 1rem 1rem;" Spacing="2">
-    <MudItem xs="12" sm="4">
-        <MudTextField Label="Template Name" @bind-Value="TemplateName" Immediate="true" Required="true" RequiredError="Name is required"/>
+<MudGrid Style="padding: 0.5rem 1rem; margin-bottom: 0.5rem;" Spacing="2">
+    <MudItem xs="12" sm="4" Style="min-height: 80px;">
+        <MudTextField T="string" 
+                      Label="Template Name" 
+                      Value="@TemplateName"
+                      ValueChanged="@((value) => OnTemplateNameChanged(value))"
+                      Validation="@(new Func<string, IEnumerable<string>>(ValidateTemplateName))"
+                      Immediate="true"
+                      DebounceInterval="300"
+                      Required="true" 
+                      Error="@isDuplicateName"
+                      ErrorText="@GetErrorText()" 
+                      RequiredError="Name is required"/>
     </MudItem>
     <MudItem xs="12" sm="8">
     <MudGrid Spacing="2">
@@ -57,7 +67,7 @@
 
 <!-- Save and Reset Buttons -->
 <div style="display:flex; width: 100%; padding: 1rem 0; justify-content: end; gap:8px;">
-    @if (string.IsNullOrWhiteSpace(TemplateName))
+    @if (string.IsNullOrWhiteSpace(TemplateName) || isDuplicateName)
     {
         <MudTooltip Color="Color.Warning" Text="Template must have a name!">
             <MudButton Disabled="true" Color="Color.Primary" Variant="Variant.Filled">Save</MudButton>
@@ -94,6 +104,8 @@
     private string MinWidth { get; set; } = "320px";
     private string MaxWidth { get; set; } = "600px";
 
+    private bool isDuplicateName = false;
+    
     private string userContent = @"
 <h2>You can write your template here and save it.</h2>
 <div><br></div>
@@ -149,10 +161,47 @@
 <div><br></div>
 <div>Beware that the editor currently does not support tables. Also, please do not remove the outermost parent div. It will break the formatting.</div>";
     }
+    
+    private IEnumerable<string> ValidateTemplateName(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            yield return "Name is required";
+    
+        if (HasDuplicateName())
+            yield return "Template must have unique name";
+    }
+
+    private bool HasDuplicateName()
+    {
+        if (string.IsNullOrWhiteSpace(TemplateName))
+            return false;
+
+        return templates.Any(t => t.Name
+            .Equals(TemplateName, StringComparison.InvariantCultureIgnoreCase)
+                                  && t.Id != editingTemplateId);
+    }
+
+    private string GetErrorText()
+    {
+        if (string.IsNullOrWhiteSpace(TemplateName))
+            return "Name is required";
+
+        if (HasDuplicateName())
+            return "Template must have unique name";
+        
+        return string.Empty;
+    }
+
+    private async Task OnTemplateNameChanged(string value)
+    {
+        TemplateName = value;
+        isDuplicateName = HasDuplicateName();
+        await InvokeAsync(StateHasChanged);
+    }
 
     private async void SaveTemplate()
     {
-        if (string.IsNullOrWhiteSpace(TemplateName))
+        if (string.IsNullOrWhiteSpace(TemplateName) || HasDuplicateName())
         {
             // Show error
             return;
