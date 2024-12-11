@@ -15,6 +15,7 @@ It currently only supports AWS SES, but more integrations are welcome, especiall
 - [Running the Application](#running-the-application)
 - [Usage](#usage-and-api)
 - [Contributing](#contributing)
+- [Screenshots](#screenshots)
 
 ## Features
 
@@ -30,7 +31,7 @@ It currently only supports AWS SES, but more integrations are welcome, especiall
 - **Email Campaigns:** Design and send bulk emails using simple templates and a rich text editor. 
 
 
-- **Self-hosted Images:** Add images to your emails. You can use remote links or you can upload your image directly to your server. OpenLaunch will set the link for you and make the image publicly avaliable.
+- **Self-hosted Images:** Add images to your emails. You can use remote links, or you can upload your image directly to your server. OpenLaunch will set the link for you and make the image publicly avaliable.
 
 
 - **Unsubscribe and bounce management:** Automatically attach unsubscribe headers and verify unsubscribe requests to prevent spoofing. Hook up to your provider's bounce notifications to automatically unsubscribe hard bounces.
