@@ -33,7 +33,6 @@ if (environment != "Production")
 {
     var options = new DotEnvOptions(envFilePaths: new[] { "../../.env" });
     DotEnv.Load(options);
-
 }
 
 Log.Logger = new LoggerConfiguration()
