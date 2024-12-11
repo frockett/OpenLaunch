@@ -89,9 +89,9 @@ For deploying OpenLaunch in production, ensure you have the following installed 
 Contributions are welcome, particularly for integrations with other email providers.
 
 Setting up the local environment is straightforward. 
-1. clone the repository locally:
+1. fork and then clone the forked repository locally:
    ```
-   git clone https://github.com/frockett/OpenLaunch.git
+   git clone https://github.com/<your github username>/OpenLaunch.git
    ```
 2. Switch to the code folder: 
    ```
