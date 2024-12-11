@@ -143,6 +143,21 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
+// Prevents HTML for login page being returned with an unauthorized API request
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        }
+
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+});
 
 builder.Services.AddMudServices();
 builder.Services.AddApexCharts();
