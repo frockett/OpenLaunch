@@ -10,12 +10,15 @@ It currently only supports AWS SES, but more integrations are welcome, especiall
 
 - [Features](#features)
 - [Prerequisites](#prerequisites)
-- [Installation](#installation)
 - [Configuration](#configuration)
 - [Running the Application](#running-the-application)
 - [Usage](#usage-and-api)
 - [Contributing](#contributing)
 - [Screenshots](#screenshots)
+
+<p align="center">
+       <img src="https://github.com/user-attachments/assets/2dfb340c-d880-4d77-8b12-888d7c42af00" alt="screenshot of dashboard" width="100%"/>
+</p>
 
 ## Features
 
@@ -204,6 +207,18 @@ Setting up the local environment is straightforward.
    dotnet restore
    dotnet build
    ```
+
+## Screenshots
+#### Email and subscriber page: 
+![emails-page](https://github.com/user-attachments/assets/7fbf1f06-fe0b-4675-a13e-df41917260e6)
+
+#### Identity and template management: 
+![setup-screen](https://github.com/user-attachments/assets/76e6514e-bb13-4fd6-bf19-6b7b34a09a9b)
+
+#### Generate and manage API keys: 
+![api-keys](https://github.com/user-attachments/assets/2854d23d-e18b-4711-ac95-29f13973f45c)
+
+
 
 
 
