@@ -12,8 +12,6 @@ public static class BounceEndpoint
                 using var reader = new StreamReader(request.Body);
                 var body = await reader.ReadToEndAsync();
                 
-                Console.WriteLine(body);
-                
                 await handler.HandleBounceNotification(body);
 
                 return Results.Ok();

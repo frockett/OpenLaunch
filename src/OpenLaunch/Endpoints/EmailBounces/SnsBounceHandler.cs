@@ -49,6 +49,10 @@ public class SnsBounceHandler
                     Log.Information("Transient bounce notification received. Details: {details}", bounceMessage);
                 }
             }
+            else
+            {
+                Log.Warning("Invalid bounce notification received. Details: {details}", bounceNotification);
+            }
         }
         catch (JsonException ex)
         {
