@@ -72,22 +72,4 @@
         }
     }
     
-    
-    private void DebugSubmit()
-    {
-        Console.WriteLine("Form submit triggered.");
-        Console.WriteLine($"Input: {NewFromAddress}");
-        if (form.IsValid)
-        {
-            Console.WriteLine("Form is valid.");
-        }
-        else
-        {
-            Console.WriteLine("Form is invalid.");
-            foreach (var error in form.Errors)
-            {
-                Console.WriteLine($"Validation Error: {error}");
-            }
-        }
-    }
 }

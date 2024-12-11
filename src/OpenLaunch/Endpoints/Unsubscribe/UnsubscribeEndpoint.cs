@@ -12,9 +12,5 @@ public static class UnsubscribeEndpoint
             .WithName("UnsubscribeUser")
             .WithTags("Unsubscribe")
             .AllowAnonymous();
-
-        app.MapGet("/api/test-unsub", async (string email, UnsubscribeLinkService unsubscribeLinks) =>
-                await unsubscribeLinks.GenerateUnsubscribeLink(email))
-            .AllowAnonymous();
     }
 }
