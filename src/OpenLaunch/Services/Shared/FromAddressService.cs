@@ -22,7 +22,7 @@ public class FromAddressService
     public async Task<bool> AlreadyExists(CreateFromAddressDetails details)
     {
         return await _dbContext.FromAddresses
-            .Select(x => x.Address == details.FromAddress && x.DisplayName == details.DisplayName)
+            .Where(x => x.Address == details.FromAddress && x.DisplayName == details.DisplayName)
             .AnyAsync();
     }
 
